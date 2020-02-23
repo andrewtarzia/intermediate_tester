@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Distributed under the terms of the MIT License.
+
+"""
+Perform FF optimisation and conformer search with OPLS.
+
+Author: Andrew Tarzia
+
+Date Created: 23 Feb 2020
+
+"""
+
 import stk
 from os.path import exists
 import glob

@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Distributed under the terms of the MIT License.
+
+"""
+Calculate and plot formation energies and pathways.
+
+Author: Andrew Tarzia
+
+Date Created: 23 Feb 2020
+
+"""
+
 import matplotlib.pyplot as plt
 
 

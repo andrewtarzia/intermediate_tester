@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Distributed under the terms of the MIT License.
+
+"""
+Build the complete cage structures.
+
+Author: Andrew Tarzia
+
+Date Created: 23 Feb 2020
+
+"""
+
 import stk
 
 

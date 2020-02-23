@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Distributed under the terms of the MIT License.
+
+"""
+Perform xTB optimisation and energy calculations on all structures.
+
+Author: Andrew Tarzia
+
+Date Created: 23 Feb 2020
+
+"""
+
 import stk
 from os.path import exists
 import glob
