@@ -45,23 +45,23 @@ def optimize_structure(name, mol):
     )
     # MD process - run MD, collect N conformers, optimize each,
     # return lowest energy conformer
-    print(f'doing MD opt of {name}')
-    md = stk.MacroModelMD(
-        macromodel_path='/home/atarzia/software/schrodinger_install',
-        output_dir=f'MD_data/{name}_MDout',
-        timeout=Settings['timeout'],
-        force_field=Settings['force_field'],
-        temperature=Settings['temperature'],
-        conformers=Settings['conformers'],
-        time_step=Settings['time_step'],
-        eq_time=Settings['eq_time'],
-        simulation_time=Settings['simulation_time'],
-        maximum_iterations=Settings['maximum_iterations'],
-        minimum_gradient=Settings['minimum_gradient'],
-        use_cache=Settings['use_cache']
-    )
-    seq = stk.Sequence(ff, md)
-    seq.optimize(mol=mol)
+    # print(f'doing MD opt of {name}')
+    # md = stk.MacroModelMD(
+    #     macromodel_path='/home/atarzia/software/schrodinger_install',
+    #     output_dir=f'MD_data/{name}_MDout',
+    #     timeout=Settings['timeout'],
+    #     force_field=Settings['force_field'],
+    #     temperature=Settings['temperature'],
+    #     conformers=Settings['conformers'],
+    #     time_step=Settings['time_step'],
+    #     eq_time=Settings['eq_time'],
+    #     simulation_time=Settings['simulation_time'],
+    #     maximum_iterations=Settings['maximum_iterations'],
+    #     minimum_gradient=Settings['minimum_gradient'],
+    #     use_cache=Settings['use_cache']
+    # )
+    # seq = stk.Sequence(ff, md)
+    ff.optimize(mol=mol)
     return mol
 
 
