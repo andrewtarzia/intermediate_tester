@@ -134,8 +134,6 @@ def main():
             with open(ey_out_file, 'r') as f:
                 lst = json.load(f)
                 results[amine] = lst
-            print(results)
-            input()
             continue
 
         # Read structure into rdkit.
@@ -254,55 +252,61 @@ def main():
             'c': '#5499C7'
         }
     }
-    fig, ax = plt.subplots(figsize=(8, 5))
     for ami in results:
+        fig, ax = plt.subplots(figsize=(8, 5))
         lab = leg_info[ami]['label']
         c = leg_info[ami]['c']
-        X1 = [results[ami][i]['NN_dis'] for i in results[ami]]
-        X2 = [results[ami][i]['opt_NN_dis'] for i in results[ami]]
-        Y1 = [results[ami][i]['f_energy'] for i in results[ami]]
+        X1 = [float(results[ami][i]['NN_dis']) for i in results[ami]]
+        X2 = [
+            float(results[ami][i]['opt_NN_dis']) for i in results[ami]
+        ]
+        Y1 = [float(results[ami][i]['f_energy']) for i in results[ami]]
         Y1 = [2625.5*(i-min(Y1)) for i in Y1]
-        Y2 = [results[ami][i]['opt_f_energy'] for i in results[ami]]
-        Y2 = [2625.5*(i-min(Y1)) for i in Y2]
+        Y2 = [
+            float(results[ami][i]['opt_f_energy'])
+            for i in results[ami]
+        ]
+        Y2 = [2625.5*(i-min(Y2)) for i in Y2]
         # Unoptimised.
-        ax.scatter(
-            X1,
-            Y1,
-            c=c,
-            alpha=1,
-            edgecolor='none',
-            marker='o',
-            s=80,
-            label=lab
-        )
+        # ax.scatter(
+        #     X1,
+        #     Y1,
+        #     c=c,
+        #     alpha=1,
+        #     edgecolor='none',
+        #     marker='o',
+        #     s=80,
+        #     label=lab
+        # )
         # Optimised.
         ax.scatter(
             X2,
             Y2,
             c=c,
-            alpha=1,
+            alpha=0.6,
             edgecolor='none',
-            marker='x',
+            marker='o',
             s=80,
             label=lab
         )
 
-    ax.legend(fontsize=16)
-    # ax.axhline(y=0, c='k', alpha=0.2, lw=2)
-    ax.tick_params(axis='both', which='major', labelsize=16)
-    ax.set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
-    # ax.set_xlim(0, 30)
-    # ax.set_ylim(-150, 150)
-    ax.set_ylabel(
-        'free energy [kJ/mol]',
-        fontsize=16
-    )
-    fig.tight_layout()
-    fig.savefig(
-        'etkdg_conf_analysis.pdf',
-        dpi=720,
-        bbox_inches='tight'
-    )
+        ax.legend(fontsize=16)
+        ax.axhline(y=0, c='k', alpha=0.2, lw=2)
+        ax.tick_params(axis='both', which='major', labelsize=16)
+        ax.set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
+        # ax.set_xlim(0, 30)
+        ax.set_ylim(-5, 70)
+        ax.set_ylabel(
+            'free energy [kJ/mol]',
+            fontsize=16
+        )
+        fig.tight_layout()
+        fig.savefig(
+            f'{ami}_etkdg_conf_analysis.pdf',
+            dpi=720,
+            bbox_inches='tight'
+        )
+        plt.close()
 
 
 if __name__ == '__main__':
