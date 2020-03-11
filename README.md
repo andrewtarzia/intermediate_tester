@@ -8,6 +8,8 @@ Build and optimise cage intermediates
         * produces 'name'.svg image of structure from rdkit
     * FF_optimise_all_structures.py
         * produces 'name'_opt.mol
+    * CREST_conformer_search.py
+        * produces 'name'_optC.mol - lowest energy conformer from CREST
     * xtb_opt_and_energy.py
         * produces 'name'_opt_xtb.{mol, ey, fey}
     * calculate_formation_energies.py

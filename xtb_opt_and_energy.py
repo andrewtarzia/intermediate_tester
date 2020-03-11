@@ -90,7 +90,6 @@ def main():
         mol.write(output_file)
 
     mol = stk.BuildingBlock.init_from_file(output_file)
-    print(mol)
 
     if not exists(ey_file) or not exists(fey_file):
         # Determine xtb energy.

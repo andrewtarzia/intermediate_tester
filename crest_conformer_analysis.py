@@ -13,6 +13,7 @@ Date Created: 23 Feb 2020
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 
 def main():
@@ -39,7 +40,7 @@ def main():
         res[ami]['e'].append(float(energy))
         res[ami]['d'].append(float(dist))
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 5))
     for ami in res:
         ax.scatter(
             res[ami]['d'],
@@ -60,7 +61,7 @@ def main():
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
     # ax.set_xlim(0, 30)
-    ax.set_ylim(-5, 70)
+    # ax.set_ylim(-5, 70)
     ax.set_ylabel(
         'free energy [kJ/mol]',
         fontsize=16
@@ -72,6 +73,40 @@ def main():
         bbox_inches='tight'
     )
     plt.close()
+
+    width = 0.2
+    X_bins = np.arange(2, 4, width)
+    for ami in res:
+        fig, ax = plt.subplots(figsize=(8, 5))
+        hist, bin_edges = np.histogram(
+            a=res[ami]['d'],
+            bins=X_bins,
+            density=True
+        )
+        ax.bar(
+            bin_edges[:-1],
+            hist,
+            align='edge',
+            alpha=1.0,
+            width=width,
+            color=res[ami]['c'],
+            edgecolor='k',
+            label=ami
+        )
+
+        ax.legend(fontsize=16)
+        ax.tick_params(axis='both', which='major', labelsize=16)
+        ax.set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
+        # ax.set_xlim(0, 30)
+        # ax.set_ylim(-5, 70)
+        ax.set_ylabel('frequency', fontsize=16)
+        fig.tight_layout()
+        fig.savefig(
+            f'crest_conf_dist_hist_{ami}.pdf',
+            dpi=720,
+            bbox_inches='tight'
+        )
+        plt.close()
 
 
 if __name__ == '__main__':
