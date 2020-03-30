@@ -91,7 +91,7 @@ def reactions():
             (1, 3, 3)
         ))
         reactions.append(reaction(
-            f'Al-2_Am{i}-2_1',
+            f'Al-2_Am{i}-2_2',
             f'2_alde1_2_ami{i}_1',
             'alde1',
             f'ami{i}',
@@ -131,7 +131,7 @@ def reactions():
             (2, 4, 6)
         ))
         reactions.append(reaction(
-            f'Al-3_Am{i}-4',
+            f'Al-3_Am{i}-4_2',
             f'3_alde1_4_ami{i}_1',
             'alde1',
             f'ami{i}',
@@ -171,7 +171,7 @@ def reactions():
             (3, 6, 9)
         ))
         reactions.append(reaction(
-            f'Al-4_Am{i}-6',
+            f'Al-4_Am{i}-6_2',
             f'4_alde1_6_ami{i}_1',
             'alde1',
             f'ami{i}',
