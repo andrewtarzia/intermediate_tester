@@ -17,6 +17,7 @@ from os import mkdir
 from os.path import exists, join
 from itertools import product
 import json
+import numpy as np
 import glob
 import matplotlib.pyplot as plt
 
@@ -69,7 +70,7 @@ def build_conformers(mol, dir):
     etkdg.randomSeed = 1000
     cids = rdkit.EmbedMultipleConfs(
         mol=mol,
-        numConfs=200,
+        numConfs=500,
         params=etkdg
     )
 
@@ -202,6 +203,7 @@ def main():
                     fey_file=opt_fey_file
                 )
             # Load energy.
+            opt_energy = load_f_energy(opt_ey_file)
             opt_f_energy = load_f_energy(opt_fey_file)
             print(fey_file, opt_fey_file)
             print(f_energy)
@@ -221,6 +223,7 @@ def main():
             res[conf_id] = {
                 'f_energy': f_energy,
                 'opt_f_energy': opt_f_energy,
+                'opt_energy': opt_energy,
                 'NN_dis': NN_dist,
                 'opt_NN_dis': opt_NN_dist,
             }
@@ -252,8 +255,59 @@ def main():
             'c': '#5499C7'
         }
     }
-    for ami in results:
-        fig, ax = plt.subplots(figsize=(8, 5))
+
+    # definitions for the axes
+    left, width = 0.1, 0.65
+    bottom, height = 0.1, 0.65
+    spacing = 0.005
+
+    rect_scatter = [left, bottom, width, height]
+    rect_histx = [left, bottom + height + spacing, width, 0.2]
+    rect_histy = [left + width + spacing, bottom, 0.2, height]
+
+    figh1, axsh = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
+    # Remove horizontal space between axes
+    figh1.subplots_adjust(hspace=0)
+    figh2, axsh2 = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
+    # Remove horizontal space between axes
+    figh2.subplots_adjust(hspace=0)
+
+    fig1 = plt.figure(figsize=(8, 8))
+    ax_s1 = plt.axes(rect_scatter)
+    ax_s1.tick_params(
+        axis='both', which='major', labelsize=16,
+        direction='in', top=True, right=True)
+    ax_h1x = plt.axes(rect_histx)
+    ax_h1x.tick_params(
+        axis='both', which='major', labelsize=16,
+        direction='in', labelbottom=False
+    )
+    ax_h1y = plt.axes(rect_histy)
+    ax_h1y.tick_params(
+        axis='both', which='major', labelsize=16,
+        direction='in', labelleft=False
+    )
+    xlim = (2.2, 4.2)
+    ylim = (-3, 22)
+    binwidth_x = 0.1
+    binwidth_y = 1
+    for i, ami in enumerate(results):
+        fig = plt.figure(figsize=(8, 8))
+        ax_s = plt.axes(rect_scatter)
+        ax_s.tick_params(
+            axis='both', which='major', labelsize=16,
+            direction='in', top=True, right=True
+        )
+        ax_hx = plt.axes(rect_histx)
+        ax_hx.tick_params(
+            axis='both', which='major', labelsize=16,
+            direction='in', labelbottom=False
+        )
+        ax_hy = plt.axes(rect_histy)
+        ax_hy.tick_params(
+            axis='both', which='major', labelsize=16,
+            direction='in', labelleft=False
+        )
         lab = leg_info[ami]['label']
         c = leg_info[ami]['c']
         X1 = [float(results[ami][i]['NN_dis']) for i in results[ami]]
@@ -267,6 +321,47 @@ def main():
             for i in results[ami]
         ]
         Y2 = [2625.5*(i-min(Y2)) for i in Y2]
+
+        bins_x = np.arange(xlim[0], xlim[1] + binwidth_x, binwidth_x)
+        bins_y = np.arange(ylim[0], ylim[1] + binwidth_y, binwidth_y)
+        ax_hx.hist(
+            X2,
+            bins=bins_x,
+            alpha=0.6,
+            edgecolor='k',
+            facecolor=c
+        )
+        ax_hy.hist(
+            Y2,
+            bins=bins_y,
+            orientation='horizontal',
+            alpha=0.6,
+            edgecolor='k',
+            facecolor=c
+        )
+
+        ax_hx.set_xlim(xlim)
+        ax_hy.set_ylim(ylim)
+
+        ax_h1x.hist(
+            X2,
+            bins=bins_x,
+            alpha=0.6,
+            edgecolor='k',
+            facecolor=c
+        )
+        ax_h1y.hist(
+            Y2,
+            bins=bins_y,
+            orientation='horizontal',
+            alpha=0.6,
+            edgecolor='k',
+            facecolor=c
+        )
+
+        ax_h1x.set_xlim(xlim)
+        ax_h1y.set_ylim(ylim)
+
         # Unoptimised.
         # ax.scatter(
         #     X1,
@@ -279,7 +374,17 @@ def main():
         #     label=lab
         # )
         # Optimised.
-        ax.scatter(
+        ax_s.scatter(
+            X2,
+            Y2,
+            c=c,
+            alpha=0.6,
+            edgecolor='none',
+            marker='o',
+            s=80,
+            label=lab
+        )
+        ax_s1.scatter(
             X2,
             Y2,
             c=c,
@@ -290,13 +395,13 @@ def main():
             label=lab
         )
 
-        ax.legend(fontsize=16)
-        ax.axhline(y=0, c='k', alpha=0.2, lw=2)
-        ax.tick_params(axis='both', which='major', labelsize=16)
-        ax.set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
-        # ax.set_xlim(0, 30)
-        ax.set_ylim(-5, 70)
-        ax.set_ylabel(
+        ax_s.legend(fontsize=16)
+        ax_s.axhline(y=0, c='k', alpha=0.2, lw=2)
+        ax_s.tick_params()
+        ax_s.set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
+        ax_s.set_xlim(xlim)
+        ax_s.set_ylim(ylim)
+        ax_s.set_ylabel(
             'free energy [kJ/mol]',
             fontsize=16
         )
@@ -307,6 +412,77 @@ def main():
             bbox_inches='tight'
         )
         plt.close()
+
+        # Only want N-N distances for conformers within 20 kJ/mol.
+        final_xs = []
+        for x, y in zip(X2, Y2):
+            if y < 10:
+                final_xs.append(x)
+
+        print(ami, len(final_xs), len(X2))
+
+        axsh[i].hist(
+            final_xs,
+            bins=bins_x,
+            alpha=0.6,
+            edgecolor='k',
+            facecolor=c,
+            density=True,
+            label=lab
+        )
+        axsh[i].tick_params(axis='both', which='major', labelsize=16)
+        axsh[i].set_xlim(xlim)
+        axsh[i].set_ylabel('frequency', fontsize=16)
+
+        axsh2[i].hist(
+            Y2,
+            bins=bins_y,
+            alpha=0.6,
+            edgecolor='k',
+            facecolor=c,
+            density=True,
+            label=lab
+        )
+        axsh2[i].tick_params(axis='both', which='major', labelsize=16)
+        axsh2[i].set_ylabel('frequency', fontsize=16)
+
+    ax_s1.legend(fontsize=16)
+    ax_s1.axhline(y=0, c='k', alpha=0.2, lw=2)
+    ax_s1.tick_params(axis='both', which='major', labelsize=16)
+    ax_s1.set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
+    ax_s1.set_xlim(xlim)
+    ax_s1.set_ylim(ylim)
+    ax_s1.set_ylabel(
+        'free energy [kJ/mol]',
+        fontsize=16
+    )
+    fig1.tight_layout()
+    fig1.savefig(
+        f'etkdg_conf_analysis.pdf',
+        dpi=720,
+        bbox_inches='tight'
+    )
+    plt.close()
+
+    figh1.legend(fontsize=16)
+    axsh[3].set_xlabel(r'N-N distance [$\mathrm{\AA}$]', fontsize=16)
+    figh1.tight_layout()
+    figh1.savefig(
+        f'etkdg_conf_DD_analysis_hist.pdf',
+        dpi=720,
+        bbox_inches='tight'
+    )
+    plt.close()
+
+    figh2.legend(fontsize=16)
+    axsh2[3].set_xlabel('free energy [kJ/mol]', fontsize=16)
+    figh2.tight_layout()
+    figh2.savefig(
+        f'etkdg_conf_E_analysis_hist.pdf',
+        dpi=720,
+        bbox_inches='tight'
+    )
+    plt.close()
 
 
 if __name__ == '__main__':

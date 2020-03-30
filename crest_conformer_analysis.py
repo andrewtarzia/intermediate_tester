@@ -26,6 +26,24 @@ def main():
     }
 
     data = pd.read_csv('NN_dist.csv')
+    leg_info = {
+        'ami1': {
+            'label': 'amine-1',
+            'c': '#FF5733'
+        },
+        'ami2': {
+            'label': 'amine-2',
+            'c': '#FFC300'
+        },
+        'ami3': {
+            'label': 'amine-3 (CC3)',
+            'c': '#48C9B0'
+        },
+        'ami4': {
+            'label': 'amine-4 (CC1)',
+            'c': '#5499C7'
+        }
+    }
     res = {
         'ami1': {'c': 'k', 'd': [], 'e': []},
         'ami2': {'c': 'b', 'd': [], 'e': []},
@@ -37,7 +55,7 @@ def main():
         dist = row[row.last_valid_index()]
         ami = ami_def[row.last_valid_index()]
         # print(row, energy, dist, ami)
-        res[ami]['e'].append(float(energy))
+        res[ami]['e'].append(float(energy)*2625.5)
         res[ami]['d'].append(float(dist))
 
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -48,8 +66,8 @@ def main():
                 i-min(res[ami]['e'])
                 for i in res[ami]['e']
             ],
-            c=res[ami]['c'],
-            label=ami,
+            c=leg_info[ami]['c'],
+            label=leg_info[ami]['label'],
             alpha=0.6,
             edgecolor='none',
             marker='o',
@@ -63,7 +81,7 @@ def main():
     # ax.set_xlim(0, 30)
     # ax.set_ylim(-5, 70)
     ax.set_ylabel(
-        'free energy [kJ/mol]',
+        'energy [kJ/mol]',
         fontsize=16
     )
     fig.tight_layout()

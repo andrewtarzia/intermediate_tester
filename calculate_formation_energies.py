@@ -16,8 +16,16 @@ from reactions import reactions
 
 
 def flat_line(ax, x, y, w=0, C='k', m='x', label=None):
-    ax.plot([x - w, x, x + w], [y, y, y], c=C, lw=2, label=label)
-    ax.scatter(x, y, marker=m, c=C, edgecolor='none', s=80)
+    ax.plot([x - w, x, x + w], [y, y, y], c=C, lw=2)
+    ax.scatter(
+        x,
+        y,
+        marker=m,
+        c=C,
+        edgecolor='none',
+        s=80,
+        label=label
+    )
 
 
 def read_ey(file):
@@ -38,11 +46,15 @@ def plot_FE(
     ylbl,
     X_pos,
     title,
+    ylim,
     amine=None
 ):
 
     fig, ax = plt.subplots(figsize=(8, 5))
+    count1 = 0
+    count2 = 0
     for ami in X:
+        print(f'doing fe of {ami}')
         if amine is not None:
             if amine != ami:
                 continue
@@ -52,26 +64,53 @@ def plot_FE(
             X_value = X[ami][i]
             Y_value = Y[ami][i] - min(Y[ami])
             print(X_value, Y_value)
-            if i == 0:
-                flat_line(
-                    ax, x=X_value, y=Y_value,
-                    w=1, C=c, label=lab
-                )
+            if names[ami][i][-1] == '2':
+                if count2 == 1:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+                        label=f'{lab}:imine'
+                    )
+                else:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c
+                    )
+                count2 += 1
             else:
-                flat_line(ax, x=X_value, y=Y_value, w=1, C=c)
-            if names[ami][i] in same_sizers:
-                ax.text(
-                    x=X_value-4,
-                    y=Y_value-5,
-                    s=names[ami][i]
-                )
+                if count1 == 0:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+                        label=f'{lab}:aminal',
+                        m='o'
+                    )
+                else:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+                        m='o'
+                    )
+                count1 += 1
 
     ax.legend(fontsize=16)
-    # ax.axhline(y=0, c='k', alpha=0.2, lw=2)
+    ax.axhline(y=0, c='k', alpha=0.2, lw=2)
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.set_xlabel('cluster size', fontsize=16)
-    ax.set_xlim(0, 30)
-    # ax.set_ylim(-150, 150)
+    ax.set_xlim(0, 55)
+    ax.set_ylim(ylim)
     ax.set_ylabel(ylbl, fontsize=16)
     ax.set_xticks(list(X_pos.values()))
     ax.set_xticklabels(list(X_pos.keys()))
@@ -80,17 +119,18 @@ def plot_FE(
 
 
 def main():
+    distt = 5
     X_positions = {
-        '[1+1]': 4*1,
-        '[1+2]': 4*2,
-        '[1+3]': 4*3,
-        '[2+2]': 4*4,
-        '[2+3]': 4*5,
-        '[2+4]': 4*6,
-        '[3+4]': 4*7,
-        '[3+5]': 4*8,
-        '[3+6]': 4*9,
-        '[4+6]': 4*10
+        '[1+1]': distt*1,
+        '[1+2]': distt*2,
+        '[1+3]': distt*3,
+        '[2+2]': distt*4,
+        '[2+3]': distt*5,
+        '[2+4]': distt*6,
+        '[3+4]': distt*7,
+        '[3+5]': distt*8,
+        '[3+6]': distt*9,
+        '[4+6]': distt*10
     }
     rxns = reactions()
 
@@ -127,6 +167,16 @@ def main():
     Y_values = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
     names = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
     Y_values_pI = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+    X_values_noaminal = {
+        'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []
+    }
+    Y_values_noaminal = {
+        'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []
+    }
+    Y_values_pI_noaminal = {
+        'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []
+    }
+    names_noaminal = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
 
     for rxn in rxns:
         # if rxn['ami'] != 'ami1':
@@ -135,18 +185,25 @@ def main():
         prod_energies = [read_ey(f'{i}.fey') for i in rxn['prod']]
         react_energies = [read_ey(f'{i}.fey') for i in rxn['react']]
         print(rxn)
-        print(prod_energies)
-        print(react_energies)
         # KJ/mol
         FE = sum(prod_energies) - sum(react_energies)
         print(FE)
         # KJ/mol per imine
         FE_pI = FE / rxn['no.imine']
         print(FE_pI)
+        if FE > 0:
+            input()
         X_values[rxn['ami']].append(X_positions[rxn['size']])
         Y_values[rxn['ami']].append(FE)
         Y_values_pI[rxn['ami']].append(FE_pI)
         names[rxn['ami']].append(rxn['long-name'])
+        if rxn['long-name'].split('_')[-1] != '1':
+            X_values_noaminal[rxn['ami']].append(
+                X_positions[rxn['size']]
+            )
+            Y_values_noaminal[rxn['ami']].append(FE)
+            Y_values_pI_noaminal[rxn['ami']].append(FE_pI)
+            names_noaminal[rxn['ami']].append(rxn['long-name'])
 
     plot_FE(
         X=X_values,
@@ -157,6 +214,7 @@ def main():
         ylbl='free energy of formation [kJ/mol]',
         X_pos=X_positions,
         title='fe_total.pdf',
+        ylim=(-10, 700),
         amine=None
     )
     plot_FE(
@@ -167,7 +225,8 @@ def main():
         same_sizers=same_sizers,
         ylbl='free energy of formation\nper imine bond [kJ/mol]',
         X_pos=X_positions,
-        title='fe_total.pdf',
+        title='fe_perimine.pdf',
+        ylim=(-10, 110),
         amine=None
     )
 
@@ -181,6 +240,7 @@ def main():
             ylbl='free energy of formation [kJ/mol]',
             X_pos=X_positions,
             title=f'fe_total_{ami}.pdf',
+            ylim=(-10, 700),
             amine=ami
         )
         plot_FE(
@@ -192,6 +252,31 @@ def main():
             ylbl='free energy of formation\nper imine bond [kJ/mol]',
             X_pos=X_positions,
             title=f'fe_perimine_{ami}.pdf',
+            ylim=(-10, 110),
+            amine=ami
+        )
+        plot_FE(
+            X=X_values_noaminal,
+            Y=Y_values_noaminal,
+            leg_info=leg_info,
+            names=names,
+            same_sizers=same_sizers,
+            ylbl='free energy of formation [kJ/mol]',
+            X_pos=X_positions,
+            title=f'fe_total_{ami}_noaminal.pdf',
+            ylim=(-10, 700),
+            amine=ami
+        )
+        plot_FE(
+            X=X_values_noaminal,
+            Y=Y_values_pI_noaminal,
+            leg_info=leg_info,
+            names=names,
+            same_sizers=same_sizers,
+            ylbl='free energy of formation\nper imine bond [kJ/mol]',
+            X_pos=X_positions,
+            title=f'fe_perimine_{ami}_noaminal.pdf',
+            ylim=(-10, 110),
             amine=ami
         )
 
