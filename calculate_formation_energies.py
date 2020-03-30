@@ -63,7 +63,7 @@ def plot_FE(
         for i in range(len(X[ami])):
             X_value = X[ami][i]
             Y_value = Y[ami][i] - min(Y[ami])
-            print(X_value, Y_value)
+            print(title, names[ami][i], X_value, Y_value)
             if names[ami][i][-1] == '2':
                 if count2 == 1:
                     flat_line(
@@ -182,8 +182,8 @@ def main():
         # if rxn['ami'] != 'ami1':
         #     continue
         # Get Free energies (*.fey).
-        prod_energies = [read_ey(f'{i}.fey') for i in rxn['prod']]
-        react_energies = [read_ey(f'{i}.fey') for i in rxn['react']]
+        prod_energies = [read_ey(f'{i}.ey') for i in rxn['prod']]
+        react_energies = [read_ey(f'{i}.ey') for i in rxn['react']]
         print(rxn)
         # KJ/mol
         FE = sum(prod_energies) - sum(react_energies)
@@ -211,7 +211,8 @@ def main():
         leg_info=leg_info,
         names=names,
         same_sizers=same_sizers,
-        ylbl='free energy of formation [kJ/mol]',
+        ylbl='energy of formation [kJ/mol]',
+        # ylbl='free energy of formation [kJ/mol]',
         X_pos=X_positions,
         title='fe_total.pdf',
         ylim=(-10, 700),
@@ -223,7 +224,8 @@ def main():
         leg_info=leg_info,
         names=names,
         same_sizers=same_sizers,
-        ylbl='free energy of formation\nper imine bond [kJ/mol]',
+        ylbl='energy of formation\nper imine bond [kJ/mol]',
+        # ylbl='free energy of formation\nper imine bond [kJ/mol]',
         X_pos=X_positions,
         title='fe_perimine.pdf',
         ylim=(-10, 110),
@@ -237,7 +239,8 @@ def main():
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
-            ylbl='free energy of formation [kJ/mol]',
+            ylbl='energy of formation [kJ/mol]',
+            # ylbl='free energy of formation [kJ/mol]',
             X_pos=X_positions,
             title=f'fe_total_{ami}.pdf',
             ylim=(-10, 700),
@@ -249,7 +252,8 @@ def main():
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
-            ylbl='free energy of formation\nper imine bond [kJ/mol]',
+            ylbl='energy of formation\nper imine bond [kJ/mol]',
+            # ylbl='free energy of formation\nper imine bond [kJ/mol]',
             X_pos=X_positions,
             title=f'fe_perimine_{ami}.pdf',
             ylim=(-10, 110),
@@ -259,9 +263,10 @@ def main():
             X=X_values_noaminal,
             Y=Y_values_noaminal,
             leg_info=leg_info,
-            names=names,
+            names=names_noaminal,
             same_sizers=same_sizers,
-            ylbl='free energy of formation [kJ/mol]',
+            ylbl='energy of formation [kJ/mol]',
+            # ylbl='free energy of formation [kJ/mol]',
             X_pos=X_positions,
             title=f'fe_total_{ami}_noaminal.pdf',
             ylim=(-10, 700),
@@ -271,9 +276,10 @@ def main():
             X=X_values_noaminal,
             Y=Y_values_pI_noaminal,
             leg_info=leg_info,
-            names=names,
+            names=names_noaminal,
             same_sizers=same_sizers,
-            ylbl='free energy of formation\nper imine bond [kJ/mol]',
+            ylbl='energy of formation\nper imine bond [kJ/mol]',
+            # ylbl='free energy of formation\nper imine bond [kJ/mol]',
             X_pos=X_positions,
             title=f'fe_perimine_{ami}_noaminal.pdf',
             ylim=(-10, 110),
