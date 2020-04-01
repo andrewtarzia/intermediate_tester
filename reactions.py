@@ -42,22 +42,22 @@ def reactions():
     # Iterate over all amines and append reactions.
     for i in [1, 2, 3, 4]:
 
-        reactions.append(reaction(
-            f'Al-1_Am{i}-1_1',
-            f'1_alde1_1_ami{i}_1',
-            'alde1',
-            f'ami{i}',
-            '[1+1]',
-            (1, 1, 1)
-        ))
-        reactions.append(reaction(
-            f'Al-1_Am{i}-1_2',
-            f'1_alde1_1_ami{i}_2',
-            'alde1',
-            f'ami{i}',
-            '[1+1]',
-            (1, 1, 1)
-        ))
+        # reactions.append(reaction(
+        #     f'Al-1_Am{i}-1_1',
+        #     f'1_alde1_1_ami{i}_1',
+        #     'alde1',
+        #     f'ami{i}',
+        #     '[1+1]',
+        #     (1, 1, 1)
+        # ))
+        # reactions.append(reaction(
+        #     f'Al-1_Am{i}-1_2',
+        #     f'1_alde1_1_ami{i}_2',
+        #     'alde1',
+        #     f'ami{i}',
+        #     '[1+1]',
+        #     (1, 1, 1)
+        # ))
         reactions.append(reaction(
             f'Al-1_Am{i}-2_1',
             f'1_alde1_2_ami{i}_1',
@@ -90,14 +90,14 @@ def reactions():
             '[1+3]',
             (1, 3, 3)
         ))
-        reactions.append(reaction(
-            f'Al-2_Am{i}-2_2',
-            f'2_alde1_2_ami{i}_1',
-            'alde1',
-            f'ami{i}',
-            '[2+2]',
-            (2, 2, 4)
-        ))
+        # reactions.append(reaction(
+        #     f'Al-2_Am{i}-2_2',
+        #     f'2_alde1_2_ami{i}_1',
+        #     'alde1',
+        #     f'ami{i}',
+        #     '[2+2]',
+        #     (2, 2, 4)
+        # ))
         reactions.append(reaction(
             f'Al-2_Am{i}-3_1',
             f'2_alde1_3_ami{i}_1',
