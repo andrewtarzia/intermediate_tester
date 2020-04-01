@@ -115,20 +115,19 @@ def calculate_f_energy(name, mol, solvent, ey_file, fey_file):
 
 def main():
 
-    amine_files = [
-        'ami1_opt_xtb.mol',
-        'ami2_opt_xtb.mol',
-        'ami3_opt_xtb.mol',
-        'ami4_opt_xtb.mol',
-    ]
+    amines = {
+        'ami1': 'CC(C)[C@H](N)[C@@H](N)C(C)C',
+        'ami2': 'CC(C)(N)CN',
+        'ami3': 'N[C@@H]1CCCC[C@H]1N',
+        'ami4': 'NCCN'
+    }
 
-    print(amine_files)
+    print(amines)
     results = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
-    for ami in amine_files:
+    for amine in amines:
         res = {}
-        amine = ami.replace('_opt_xtb.mol', '')
-        ey_out_file = ami.replace('_opt_xtb.mol', 'conf_results.out')
-        ami_dir = ami.replace('_opt_xtb.mol', '_confs')
+        ey_out_file = f'{amine}_conf_results.out'
+        ami_dir = f'{amine}_confs'
 
         # Do calcs, only if the two energy files do not already exist.
         if exists(ey_out_file):
@@ -138,7 +137,7 @@ def main():
             continue
 
         # Read structure into rdkit.
-        rdk_mol = rdkit.MolFromMolFile(ami)
+        rdk_mol = rdkit.MolFromSmiles(amines[amine])
         rdk_mol = rdkit.AddHs(rdk_mol)
         print(f'doing {amine}')
         # Write directory.
@@ -227,7 +226,6 @@ def main():
                 'NN_dis': NN_dist,
                 'opt_NN_dis': opt_NN_dist,
             }
-            print(res)
 
         # Save results to JSON file and results dict.
         results[amine] = res
