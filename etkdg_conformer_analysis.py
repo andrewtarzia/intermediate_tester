@@ -15,7 +15,6 @@ from rdkit.Chem import AllChem as rdkit
 import stk
 from os import mkdir
 from os.path import exists, join
-from itertools import product
 import json
 import numpy as np
 import glob
@@ -24,14 +23,114 @@ import matplotlib.pyplot as plt
 
 def calculate_NN_distance(stk_mol):
     # Assumes that there are only two N atoms in the molecules
-    for atom1, atom2 in product(stk_mol.atoms, repeat=2):
-        if atom1.id == atom2.id:
-            continue
-        if atom1.atomic_number == 7 and atom2.atomic_number == 7:
-            print(atom1, atom2)
-            NN_dist = stk_mol.get_atom_distance(atom1.id, atom2.id)
-            print(NN_dist)
-            return NN_dist
+    N_atom_ids = [i.id for i in stk_mol.atoms if i.atomic_number == 7]
+    NN_dist = stk_mol.get_atom_distance(N_atom_ids[0], N_atom_ids[1])
+    print(NN_dist)
+    return NN_dist
+
+
+def get_dihedral(pt1, pt2, pt3, pt4):
+    """
+    Calculate the dihedral between four points.
+
+    Uses Praxeolitic formula --> 1 sqrt, 1 cross product
+
+    Output in range (-pi to pi).
+
+    From: https://stackoverflow.com/questions/20305272/
+    dihedral-torsion-angle-from-four-points-in-cartesian-
+    coordinates-in-python
+    (new_dihedral(p))
+
+    """
+    p0 = np.asarray(pt1)
+    p1 = np.asarray(pt2)
+    p2 = np.asarray(pt3)
+    p3 = np.asarray(pt4)
+
+    b0 = -1.0 * (p1 - p0)
+    b1 = p2 - p1
+    b2 = p3 - p2
+
+    # normalize b1 so that it does not influence magnitude of vector
+    # rejections that come next
+    b1 /= np.linalg.norm(b1)
+
+    # vector rejections
+    # v = projection of b0 onto plane perpendicular to b1
+    #   = b0 minus component that aligns with b1
+    # w = projection of b2 onto plane perpendicular to b1
+    #   = b2 minus component that aligns with b1
+    v = b0 - np.dot(b0, b1) * b1
+    w = b2 - np.dot(b2, b1) * b1
+
+    # angle between v and w in a plane is the torsion angle
+    # v and w may not be normalized but that's fine since tan is y/x
+    x = np.dot(v, w)
+    y = np.dot(np.cross(b1, v), w)
+    return np.degrees(np.arctan2(y, x))
+
+
+def calculate_NCCN_dihedral(stk_mol):
+    # Assumes that there are only two N atoms in the molecules
+    N_atom_ids = [i.id for i in stk_mol.atoms if i.atomic_number == 7]
+    print(N_atom_ids)
+    # Get all bonds from N atoms.
+    all_N_bonds = []
+    for bond in stk_mol.bonds:
+        if bond.atom1.id in N_atom_ids or bond.atom2.id in N_atom_ids:
+            all_N_bonds.append(bond)
+
+    # Find N bonds to C atoms, that are also connected.
+    connected_C_atom_ids = [None, None]
+    for b in all_N_bonds:
+        non_N = b.atom1.id if b.atom2.id in N_atom_ids else b.atom2.id
+        N_id = b.atom2.id if b.atom2.id in N_atom_ids else b.atom1.id
+        for b2 in all_N_bonds:
+            if connected_C_atom_ids[0] is not None:
+                break
+            if b == b2:
+                continue
+            non_N2 = (
+                b2.atom1.id
+                if b2.atom2.id in N_atom_ids else b2.atom2.id
+            )
+            N2_id = (
+                b2.atom2.id
+                if b2.atom2.id in N_atom_ids else b2.atom1.id
+            )
+            # Find a bond between non_N and non_N2 - thats the dihedral
+            # Else, move on.
+            for bond in stk_mol.bonds:
+                if connected_C_atom_ids[0] is not None:
+                    break
+                cond1 = bond.atom1.id in [non_N, non_N2]
+                cond2 = bond.atom2.id in [non_N, non_N2]
+                if cond1 and cond2:
+                    print('found!', bond, b, b2)
+                    # preserve order
+                    if N_id == N_atom_ids[0]:
+                        connected_C_atom_ids[0] = non_N
+                        connected_C_atom_ids[1] = non_N2
+                    elif N2_id == N_atom_ids[0]:
+                        connected_C_atom_ids[0] = non_N2
+                        connected_C_atom_ids[1] = non_N
+
+    print(N_atom_ids, connected_C_atom_ids)
+    pts = [
+        i for i in stk_mol.get_atom_positions(
+            atom_ids=N_atom_ids+connected_C_atom_ids
+        )
+    ]
+    NCCN_dihed = get_dihedral(
+        pt1=pts[0],
+        pt2=pts[2],
+        pt3=pts[3],
+        pt4=pts[1],
+    )
+
+    print(NCCN_dihed)
+    return NCCN_dihed
 
 
 def optimise_conformer(name, mol, solvent, output_file):
@@ -119,11 +218,18 @@ def main():
         'ami1': 'CC(C)[C@H](N)[C@@H](N)C(C)C',
         'ami2': 'CC(C)(N)CN',
         'ami3': 'N[C@@H]1CCCC[C@H]1N',
-        'ami4': 'NCCN'
+        'ami4': 'NCCN',
+        'ami1b': 'CC(C)[C@H](N)[C@@H](/N=C/c1ccccc1)C(C)C',
+        'ami2b': 'CC(C)(N)C/N=C/c1ccccc1',
+        'ami3b': 'N[C@@H]1CCCC[C@H]1/N=C/c1ccccc1',
+        'ami4b': 'NCC/N=C\\c1ccccc1'
     }
 
     print(amines)
-    results = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+    results = {
+        'ami1': [], 'ami2': [], 'ami3': [], 'ami4': [],
+        'ami1b': [], 'ami2b': [], 'ami3b': [], 'ami4b': []
+    }
     for amine in amines:
         res = {}
         ey_out_file = f'{amine}_conf_results.out'
@@ -214,17 +320,21 @@ def main():
                 use_cache=False
             )
             NN_dist = calculate_NN_distance(conf)
+            NCCN_dihed = calculate_NCCN_dihedral(conf)
             opt_conf = stk.BuildingBlock.init_from_file(
                 opt_conf_file,
                 use_cache=False
             )
             opt_NN_dist = calculate_NN_distance(opt_conf)
+            opt_NCCN_dihed = calculate_NCCN_dihedral(opt_conf)
             res[conf_id] = {
                 'f_energy': f_energy,
                 'opt_f_energy': opt_f_energy,
                 'opt_energy': opt_energy,
                 'NN_dis': NN_dist,
                 'opt_NN_dis': opt_NN_dist,
+                'NCCN_dihed': NCCN_dihed,
+                'opt_NCCN_dihed': opt_NCCN_dihed,
             }
 
         # Save results to JSON file and results dict.
@@ -251,6 +361,22 @@ def main():
         'ami4': {
             'label': 'amine-4 (CC1)',
             'c': '#5499C7'
+        },
+        'ami1b': {
+            'label': 'amine-1 + benzaldehyde',
+            'c': '#FFEAE5'
+        },
+        'ami2b': {
+            'label': 'amine-2 + benzaldehyde',
+            'c': '#FFF8DF'
+        },
+        'ami3b': {
+            'label': 'amine-3 + benzaldehyde',
+            'c': '#E8F8F5'
+        },
+        'ami4b': {
+            'label': 'amine-4 + benzaldehyde',
+            'c': '#EAF2F8'
         }
     }
 
@@ -266,6 +392,9 @@ def main():
     figh1, axsh = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
     # Remove horizontal space between axes
     figh1.subplots_adjust(hspace=0)
+    figh1d, axshd = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
+    # Remove horizontal space between axes
+    figh1d.subplots_adjust(hspace=0)
     figh2, axsh2 = plt.subplots(4, 1, figsize=(8, 10), sharex=True)
     # Remove horizontal space between axes
     figh2.subplots_adjust(hspace=0)
@@ -286,10 +415,14 @@ def main():
         direction='in', labelleft=False
     )
     xlim = (2.2, 4.2)
+    xlimd = (-180, 180)
     ylim = (-3, 22)
     binwidth_x = 0.1
+    binwidth_xd = 5
     binwidth_y = 1
     for i, ami in enumerate(results):
+        if i > 3:
+            continue
         fig = plt.figure(figsize=(8, 8))
         ax_s = plt.axes(rect_scatter)
         ax_s.tick_params(
@@ -308,10 +441,14 @@ def main():
         )
         lab = leg_info[ami]['label']
         c = leg_info[ami]['c']
-        X1 = [float(results[ami][i]['NN_dis']) for i in results[ami]]
         X2 = [
             float(results[ami][i]['opt_NN_dis']) for i in results[ami]
         ]
+        NC2 = [
+            float(results[ami][i]['opt_NCCN_dihed'])
+            for i in results[ami]
+        ]
+
         Y1 = [float(results[ami][i]['f_energy']) for i in results[ami]]
         Y1 = [2625.5*(i-min(Y1)) for i in Y1]
         Y2 = [
@@ -319,8 +456,34 @@ def main():
             for i in results[ami]
         ]
         Y2 = [2625.5*(i-min(Y2)) for i in Y2]
+        ami_b = f'{ami}b'
+        cb = leg_info[ami_b]['c']
+        labb = leg_info[ami_b]['label']
+        Xb2 = [
+            float(results[ami_b][i]['opt_NN_dis'])
+            for i in results[ami_b]
+        ]
+        NCb2 = [
+            float(results[ami_b][i]['opt_NCCN_dihed'])
+            for i in results[ami_b]
+        ]
+        Yb1 = [
+            float(results[ami_b][i]['f_energy'])
+            for i in results[ami_b]
+        ]
+        Yb1 = [2625.5*(i-min(Yb1)) for i in Yb1]
+        Yb2 = [
+            float(results[ami_b][i]['opt_f_energy'])
+            for i in results[ami_b]
+        ]
+        Yb2 = [2625.5*(i-min(Yb2)) for i in Yb2]
 
         bins_x = np.arange(xlim[0], xlim[1] + binwidth_x, binwidth_x)
+        bins_xd = np.arange(
+            xlimd[0],
+            xlimd[1] + binwidth_xd,
+            binwidth_xd
+        )
         bins_y = np.arange(ylim[0], ylim[1] + binwidth_y, binwidth_y)
         ax_hx.hist(
             X2,
@@ -411,35 +574,90 @@ def main():
         )
         plt.close()
 
-        # Only want N-N distances for conformers within 20 kJ/mol.
+        # Only want N-N distances for conformers within 10 kJ/mol.
         final_xs = []
-        for x, y in zip(X2, Y2):
+        final_dihed_xs = []
+        for x, y, xd in zip(X2, Y2, NC2):
             if y < 10:
                 final_xs.append(x)
+                final_dihed_xs.append(xd)
+        final_xbs = []
+        final_dihed_xbs = []
+        for x, y, xd in zip(Xb2, Yb2, NCb2):
+            if y < 10:
+                final_xbs.append(x)
+                final_dihed_xbs.append(xd)
 
         print(ami, len(final_xs), len(X2))
+        print(ami_b, len(final_xbs), len(Xb2))
 
         axsh[i].hist(
             final_xs,
             bins=bins_x,
             alpha=0.6,
             edgecolor='k',
+            linewidth=1.2,
             facecolor=c,
             density=True,
             label=lab
         )
+        axsh[i].hist(
+            final_xbs,
+            bins=bins_x,
+            alpha=0.7,
+            edgecolor='k',
+            linewidth=1.2,
+            facecolor=cb,
+            density=True,
+            label=labb
+        )
         axsh[i].tick_params(axis='both', which='major', labelsize=16)
         axsh[i].set_xlim(xlim)
         axsh[i].set_ylabel('frequency', fontsize=16)
+
+        axshd[i].hist(
+            final_dihed_xs,
+            bins=bins_xd,
+            alpha=0.6,
+            edgecolor='k',
+            linewidth=1.2,
+            facecolor=c,
+            density=True,
+            label=lab
+        )
+        axshd[i].hist(
+            final_dihed_xbs,
+            bins=bins_xd,
+            alpha=0.7,
+            edgecolor='k',
+            linewidth=1.2,
+            facecolor=cb,
+            density=True,
+            label=labb
+        )
+        axshd[i].tick_params(axis='both', which='major', labelsize=16)
+        axshd[i].set_xlim(xlimd)
+        axshd[i].set_ylabel('frequency', fontsize=16)
 
         axsh2[i].hist(
             Y2,
             bins=bins_y,
             alpha=0.6,
             edgecolor='k',
+            linewidth=1.2,
             facecolor=c,
             density=True,
             label=lab
+        )
+        axsh2[i].hist(
+            Yb2,
+            bins=bins_y,
+            alpha=0.7,
+            edgecolor='k',
+            linewidth=1.2,
+            facecolor=cb,
+            density=True,
+            label=labb
         )
         axsh2[i].tick_params(axis='both', which='major', labelsize=16)
         axsh2[i].set_ylabel('frequency', fontsize=16)
@@ -477,6 +695,16 @@ def main():
     figh2.tight_layout()
     figh2.savefig(
         f'etkdg_conf_E_analysis_hist.pdf',
+        dpi=720,
+        bbox_inches='tight'
+    )
+    plt.close()
+
+    figh1d.legend(fontsize=16, loc=4)
+    axshd[3].set_xlabel(r'NCCN dihedral [$^{\circ}$]', fontsize=16)
+    figh1d.tight_layout()
+    figh1d.savefig(
+        f'etkdg_conf_DI_analysis_hist.pdf',
         dpi=720,
         bbox_inches='tight'
     )
