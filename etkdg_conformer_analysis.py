@@ -415,7 +415,7 @@ def main():
         direction='in', labelleft=False
     )
     xlim = (2.2, 4.2)
-    xlimd = (-180, 180)
+    xlimd = (-5, 185)
     ylim = (-3, 22)
     binwidth_x = 0.1
     binwidth_xd = 5
@@ -445,14 +445,14 @@ def main():
             float(results[ami][i]['opt_NN_dis']) for i in results[ami]
         ]
         NC2 = [
-            float(results[ami][i]['opt_NCCN_dihed'])
+            abs(float(results[ami][i]['opt_NCCN_dihed']))
             for i in results[ami]
         ]
 
         Y1 = [float(results[ami][i]['f_energy']) for i in results[ami]]
         Y1 = [2625.5*(i-min(Y1)) for i in Y1]
         Y2 = [
-            float(results[ami][i]['opt_f_energy'])
+            float(results[ami][i]['opt_energy'])
             for i in results[ami]
         ]
         Y2 = [2625.5*(i-min(Y2)) for i in Y2]
@@ -464,7 +464,7 @@ def main():
             for i in results[ami_b]
         ]
         NCb2 = [
-            float(results[ami_b][i]['opt_NCCN_dihed'])
+            abs(float(results[ami_b][i]['opt_NCCN_dihed']))
             for i in results[ami_b]
         ]
         Yb1 = [
@@ -473,7 +473,7 @@ def main():
         ]
         Yb1 = [2625.5*(i-min(Yb1)) for i in Yb1]
         Yb2 = [
-            float(results[ami_b][i]['opt_f_energy'])
+            float(results[ami_b][i]['opt_energy'])
             for i in results[ami_b]
         ]
         Yb2 = [2625.5*(i-min(Yb2)) for i in Yb2]
@@ -563,7 +563,7 @@ def main():
         ax_s.set_xlim(xlim)
         ax_s.set_ylim(ylim)
         ax_s.set_ylabel(
-            'free energy [kJ/mol]',
+            'energy [kJ/mol]',
             fontsize=16
         )
         fig.tight_layout()
@@ -669,7 +669,7 @@ def main():
     ax_s1.set_xlim(xlim)
     ax_s1.set_ylim(ylim)
     ax_s1.set_ylabel(
-        'free energy [kJ/mol]',
+        'energy [kJ/mol]',
         fontsize=16
     )
     fig1.tight_layout()
@@ -691,7 +691,7 @@ def main():
     plt.close()
 
     figh2.legend(fontsize=16)
-    axsh2[3].set_xlabel('free energy [kJ/mol]', fontsize=16)
+    axsh2[3].set_xlabel('energy [kJ/mol]', fontsize=16)
     figh2.tight_layout()
     figh2.savefig(
         f'etkdg_conf_E_analysis_hist.pdf',
@@ -700,7 +700,7 @@ def main():
     )
     plt.close()
 
-    figh1d.legend(fontsize=16, loc=4)
+    figh1d.legend(fontsize=16, loc=1)
     axshd[3].set_xlabel(r'NCCN dihedral [$^{\circ}$]', fontsize=16)
     figh1d.tight_layout()
     figh1d.savefig(
