@@ -13,6 +13,8 @@ Date Created: 23 Feb 2020
 
 import matplotlib.pyplot as plt
 from reactions import reactions
+from rdkit.Chem import AllChem as rdkit
+from rdkit.Chem import Descriptors
 
 
 def flat_line(ax, x, y, w=0, C='k', m='x', label=None):
@@ -51,9 +53,9 @@ def plot_FE(
 ):
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    count1 = 0
-    count2 = 0
     for ami in X:
+        count1 = 0
+        count2 = 0
         print(f'doing fe of {ami}')
         if amine is not None:
             if amine != ami:
@@ -116,6 +118,14 @@ def plot_FE(
     ax.set_xticklabels(list(X_pos.keys()))
     fig.tight_layout()
     fig.savefig(title, dpi=720, bbox_inches='tight')
+
+
+def get_mass(name):
+    mol = rdkit.MolFromMolFile(name)
+    # Add Hs.
+    mol = rdkit.AddHs(mol)
+    MW = Descriptors.ExactMolWt(mol)
+    return MW
 
 
 def main():
@@ -184,13 +194,10 @@ def main():
         # Get Free energies (*.fey).
         prod_energies = [read_ey(f'{i}.ey') for i in rxn['prod']]
         react_energies = [read_ey(f'{i}.ey') for i in rxn['react']]
-        print(rxn)
         # KJ/mol
         FE = sum(prod_energies) - sum(react_energies)
-        print(FE)
         # KJ/mol per imine
         FE_pI = FE / rxn['no.imine']
-        print(FE_pI)
         if FE > 0:
             input()
         X_values[rxn['ami']].append(X_positions[rxn['size']])
@@ -204,6 +211,26 @@ def main():
             Y_values_noaminal[rxn['ami']].append(FE)
             Y_values_pI_noaminal[rxn['ami']].append(FE_pI)
             names_noaminal[rxn['ami']].append(rxn['long-name'])
+
+        cage_file = f"{rxn['prod'][0]}.mol"
+        mass = get_mass(cage_file)
+        if rxn['long-name'].split('_')[-1] != '1':
+            is_aminal = False
+        else:
+            is_aminal = True
+        amine_energy = read_ey(f"{rxn['ami']}_opt_xtb.ey")
+        aldehyde_energy = read_ey(f"{rxn['alde']}_opt_xtb.ey")
+        water_energy = read_ey('water_opt_xtb.ey')
+        cage_energy = read_ey(f"{rxn['prod'][0]}.ey")
+        print(
+            f"{rxn['long-name']},{rxn['size']},{mass},{is_aminal},"
+            f"{cage_energy},"
+            f"{rxn['ami']},{rxn['no_ami']},{amine_energy},"
+            f"{rxn['alde']},{rxn['no_alde']},{aldehyde_energy},"
+            f"{rxn['no.imine']},{rxn['no.imine']},{water_energy},"
+            f"{sum(prod_energies)},{sum(react_energies)},"
+            f"{FE},{FE_pI}"
+        )
 
     plot_FE(
         X=X_values,

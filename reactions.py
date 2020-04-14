@@ -16,14 +16,16 @@ def reaction(lm, int_name, alde, ami, size, sts):
 
     dict = {
         'long-name': lm,
-        'prod': [f'{int_name}_opt_xtb'] + ['water_xtb']*sts[2],
+        'prod': [f'{int_name}_opt_xtb'] + ['water_opt_xtb']*sts[2],
         'react': (
             [f'{alde}_opt_xtb']*sts[0] + [f'{ami}_opt_xtb']*sts[1]
         ),
         'no.imine': sts[2],
         'size': size,
         'alde': alde,
-        'ami': ami
+        'ami': ami,
+        'no_ami': sts[1],
+        'no_alde': sts[0]
     }
 
     return dict
