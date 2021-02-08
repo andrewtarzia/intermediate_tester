@@ -81,7 +81,7 @@ def main():
     # ax.set_xlim(0, 30)
     # ax.set_ylim(-5, 70)
     ax.set_ylabel(
-        'energy [kJ/mol]',
+        'energy [kJmol$^{-1}$]',
         fontsize=16
     )
     fig.tight_layout()

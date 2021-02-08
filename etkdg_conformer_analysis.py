@@ -563,7 +563,7 @@ def main():
         ax_s.set_xlim(xlim)
         ax_s.set_ylim(ylim)
         ax_s.set_ylabel(
-            'energy [kJ/mol]',
+            'energy [kJmol$^{-1}$]',
             fontsize=16
         )
         fig.tight_layout()
@@ -574,7 +574,7 @@ def main():
         )
         plt.close()
 
-        # Only want N-N distances for conformers within 10 kJ/mol.
+        # Only want N-N distances for conformers within 10 kJmol$^{-1}$.
         final_xs = []
         final_dihed_xs = []
         for x, y, xd in zip(X2, Y2, NC2):
@@ -669,7 +669,7 @@ def main():
     ax_s1.set_xlim(xlim)
     ax_s1.set_ylim(ylim)
     ax_s1.set_ylabel(
-        'energy [kJ/mol]',
+        'energy [kJmol$^{-1}$]',
         fontsize=16
     )
     fig1.tight_layout()
@@ -691,7 +691,7 @@ def main():
     plt.close()
 
     figh2.legend(fontsize=16)
-    axsh2[3].set_xlabel('energy [kJ/mol]', fontsize=16)
+    axsh2[3].set_xlabel('energy [kJmol$^{-1}$]', fontsize=16)
     figh2.tight_layout()
     figh2.savefig(
         f'etkdg_conf_E_analysis_hist.pdf',
