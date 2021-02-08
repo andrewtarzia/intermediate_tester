@@ -574,7 +574,7 @@ def main():
         )
         plt.close()
 
-        # Only want N-N distances for conformers within 10 kJmol$^{-1}$.
+        # Only want N-N distances for conformers within 10 kJ/mol.
         final_xs = []
         final_dihed_xs = []
         for x, y, xd in zip(X2, Y2, NC2):
