@@ -36,12 +36,12 @@ def result_key_defn():
         'NN_dis': {
             'label': r'N-N distance [$\mathrm{\AA}$]',
             'lim': (2, 4),
-            'width': 0.05,
+            'width': 0.02,
         },
         'NCCN_dihed': {
             'label': r'NCCN dihedral [$^{\circ}$]',
             'lim': (0, 200),
-            'width': 5,
+            'width': 2,
         },
     }
 
@@ -180,14 +180,16 @@ def build_conformers(mol, dir, solvent=None):
     etkdg.randomSeed = 1000
     etkdg.numThreads = 4
     etkdg.useRandomCoords = True
-    etkdg.pruneRmsThresh = 0.05
+    # etkdg.pruneRmsThresh = 0.05
     print('building conformers')
     cids = rdkit.EmbedMultipleConfs(
         mol=mol,
         numConfs=nconfs,
         params=etkdg
     )
-    print(f'extracted {len(cids)} conformers out of {nconfs}')
+    print(
+        f'extracted {len(cids)} conformers out of {nconfs}'
+    )
 
     # Save each conformer into directory.
     stk_conformers = {}
@@ -220,6 +222,58 @@ def build_conformers(mol, dir, solvent=None):
         )
         conf = xtb_opt.optimize(mol=conf)
         conf.write(join(dir, f'conformer_{cid}.mol'))
+        stk_conformers[cid] = conf
+    return stk_conformers
+
+
+def load_opls_conformers(
+    amine,
+    temp_mol,
+    structure_dir,
+    outputdir,
+    solvent=None
+):
+    conformer_xyzs = sorted(glob.glob(
+        f'{structure_dir}/{amine}*c.xyz'
+    ))
+    print(
+        f'extracting {len(conformer_xyzs)} conformers'
+    )
+
+    # Save each conformer into directory.
+    stk_conformers = {}
+    for confxyz in conformer_xyzs:
+        cid = int(
+            confxyz.split('_')[1].replace('c.xyz', '')
+        )
+        filename = join(outputdir, f'conformer_{cid}.mol')
+
+        print(f'doing xtb opt of {cid}')
+        if solvent is None:
+            solvent_str = None
+            solvent_grid = 'normal'
+        else:
+            solvent_str, solvent_grid = solvent
+
+        conf = temp_mol.with_structure_from_file(confxyz)
+
+        xtb_opt = stko.XTB(
+            xtb_path='/home/atarzia/software/xtb-6.3.2/bin/xtb',
+            output_dir=f'{outputdir}/{cid}_opt',
+            gfn_version=2,
+            num_cores=6,
+            opt_level='normal',
+            charge=0,
+            num_unpaired_electrons=0,
+            max_runs=5,
+            electronic_temperature=300,
+            calculate_hessian=True,
+            unlimited_memory=True,
+            solvent=solvent_str,
+            solvent_grid=solvent_grid
+        )
+        conf = xtb_opt.optimize(mol=conf)
+        conf.write(filename)
         stk_conformers[cid] = conf
     return stk_conformers
 
@@ -335,121 +389,245 @@ def run_opls3e_workflow(amines, structure_dir):
         'ami1': [], 'ami2': [], 'ami3': [], 'ami4': [],
         'ami1b': [], 'ami2b': [], 'ami3b': [], 'ami4b': []
     }
-    raise NotImplementedError()
     for amine in amines:
+        if 'b' == amine[-1]:
+            continue
         res = {}
-        ey_out_file = f'{amine}_conf_results.out'
-        ami_dir = f'{amine}_confs'
+        ey_out_file = f'{amine}_opls3e_conf_results.out'
+        ami_dir = f'{amine}_opls3e_confs'
 
         # Do calcs, only if the two energy files do not already exist.
         if exists(ey_out_file):
             with open(ey_out_file, 'r') as f:
-                lst = json.load(f)
-                results[amine] = lst
+                results[amine] = json.load(f)
             continue
 
-        # Read structure into rdkit.
-        rdk_mol = rdkit.MolFromSmiles(amines[amine])
-        rdk_mol = rdkit.AddHs(rdk_mol)
+        # Read a temparary structure into stk.
+        temp_mol = stk.BuildingBlock.init_from_file(
+            f'{structure_dir}/{amine}.mol'
+        )
         print(f'doing {amine}')
         # Write directory.
         if not exists(ami_dir):
             mkdir(ami_dir)
 
         # Get N conformers.
-        print(f'building conformers of {amine}')
-        build_conformers(mol=rdk_mol, dir=ami_dir)
+        print(f'building and optimising conformers of {amine}')
+        stk_conformers = load_opls_conformers(
+            amine=amine,
+            temp_mol=temp_mol,
+            structure_dir=structure_dir,
+            outputdir=ami_dir,
+        )
 
         # For each conformer, iterate.
-        print(f'getting energies of conformers of {amine}')
-        for conf_file in glob.glob(join(ami_dir, 'conformer*mol')):
-            if 'opt' in conf_file:
-                continue
-            print(conf_file)
-            opt_conf_file = conf_file.replace('.mol', '_opt.mol')
-            ey_file = conf_file.replace('.mol', '.ey')
-            fey_file = conf_file.replace('.mol', '.fey')
-            opt_ey_file = conf_file.replace('.mol', '_opt.ey')
-            opt_fey_file = conf_file.replace('.mol', '_opt.fey')
-            conf_id = conf_file.replace(ami_dir+'/', '')
-            conf_id = conf_id.split('_')[1].replace('.mol', '')
-            print(ey_file, conf_id)
-
-            # Load in stk object.
-            conf = stk.BuildingBlock.init_from_file(conf_file)
-            print(conf)
+        print(f'getting properties of conformers of {amine}')
+        for cid in stk_conformers:
+            conf = stk_conformers[cid]
+            ey_file = join(ami_dir, f'conformer_{cid}.ey')
+            fey_file = join(ami_dir, f'conformer_{cid}.fey')
+            print(cid, ey_file, fey_file)
 
             # Get xTB energy, optimise with xTB, and get energy again.
             # Read in opt and unopt energies.
             if not exists(ey_file) or not exists(fey_file):
                 # Calculate energy.
                 calculate_f_energy(
-                    name=join(ami_dir, f'unoptey_{conf_id}'),
+                    name=join(ami_dir, f'{cid}'),
                     mol=conf,
-                    solvent=('chcl3', 'verytight'),
+                    solvent=None,
                     ey_file=ey_file,
                     fey_file=fey_file
                 )
             # Load energy.
             f_energy = load_f_energy(fey_file)
+            print(fey_file, f_energy)
 
-            if not exists(opt_ey_file) or not exists(opt_fey_file):
-                if not exists(opt_conf_file):
-                    # Optimise conformer.
-                    optimise_conformer(
-                        name=join(ami_dir, f'opt_{conf_id}'),
-                        mol=conf,
-                        solvent=('chcl3', 'verytight'),
-                        output_file=opt_conf_file
-                    )
-                opt_conf = stk.BuildingBlock.init_from_file(
-                    opt_conf_file
-                )
-                # Calculate energy.
-                calculate_f_energy(
-                    name=join(ami_dir, f'optey_{conf_id}'),
-                    mol=opt_conf,
-                    solvent=('chcl3', 'verytight'),
-                    ey_file=opt_ey_file,
-                    fey_file=opt_fey_file
-                )
-            # Load energy.
-            opt_energy = load_f_energy(opt_ey_file)
-            opt_f_energy = load_f_energy(opt_fey_file)
-            print(fey_file, opt_fey_file)
-            print(f_energy)
-            print(opt_f_energy)
-
-            # Calculate N-N distance.
-            conf = stk.BuildingBlock.init_from_file(
-                conf_file,
-                use_cache=False
-            )
+            # Calculate N-N distance and NCCN dihedral.
             NN_dist = calculate_NN_distance(conf)
             NCCN_dihed = calculate_NCCN_dihedral(conf)
-            opt_conf = stk.BuildingBlock.init_from_file(
-                opt_conf_file,
-                use_cache=False
-            )
-            opt_NN_dist = calculate_NN_distance(opt_conf)
-            opt_NCCN_dihed = calculate_NCCN_dihedral(opt_conf)
-            res[conf_id] = {
+            res[cid] = {
                 'f_energy': f_energy,
-                'opt_f_energy': opt_f_energy,
-                'opt_energy': opt_energy,
                 'NN_dis': NN_dist,
-                'opt_NN_dis': opt_NN_dist,
                 'NCCN_dihed': NCCN_dihed,
-                'opt_NCCN_dihed': opt_NCCN_dihed,
             }
 
         # Save results to JSON file and results dict.
         results[amine] = res
         with open(ey_out_file, 'w') as f:
             json.dump(res, f)
-
         print('.................done.......................')
+
     return results
+
+
+def density_of_all_amines(results, filename):
+
+    # For each property.
+    result_keys = result_key_defn()
+    for rkey in result_keys:
+        rkeyinfo = result_keys[rkey]
+        if rkey == 'NN_dis':
+            bottoms = [0, 2, 4, 6]
+            density = True
+            ylab = 'frequency'
+        else:
+            bottoms = [0, 0, 0, 0]
+            density = False
+            ylab = 'count'
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        # For each amine.
+        for i, ami in enumerate(results):
+            if ami[-1] == 'b':
+                continue
+            result_dict = results[ami]
+
+            # Get data.
+            data = {
+                cid: (
+                    result_dict[cid]['f_energy'],
+                    result_dict[cid][rkey]
+                )
+                for cid in result_dict
+            }
+
+            eydata = {cid: data[cid][0] for cid in data}
+            # Set to relative energies.
+            eydata = {
+                cid: eydata[cid]-min(eydata.values())
+                for cid in eydata
+            }
+            # Set to kJ/mol.
+            eydata = {cid: eydata[cid]*2625.5 for cid in eydata}
+
+            if rkey == 'f_energy':
+                xdata = [eydata[cid] for cid in eydata]
+            else:
+                # Only want lowest 20 kJ/mol.
+                xdata = [
+                    data[cid][1] for cid in data
+                    if eydata[cid] < 20
+                ]
+
+            print(min(xdata), max(xdata))
+
+            # Plot data.
+            xwidth = rkeyinfo['width']
+            xbins = np.arange(
+                rkeyinfo['lim'][0],
+                rkeyinfo['lim'][1] + xwidth,
+                xwidth
+            )
+            ax.hist(
+                x=xdata,
+                bins=xbins,
+                density=density,
+                bottom=bottoms[i],
+                histtype='step',
+                linewidth=2.5,
+                facecolor=leg_info()[ami]['c'],
+                color=leg_info()[ami]['c'],
+                label=leg_info()[ami]['label'],
+            )
+
+        ax.tick_params(axis='both', which='major', labelsize=16)
+        ax.set_xlim(rkeyinfo['lim'])
+        ax.set_xlabel(rkeyinfo['label'], fontsize=16)
+        ax.set_ylabel(ylab, fontsize=16)
+        if bottoms[-1] != 0:
+            ax.set_yticks([])
+        ax.tick_params(left=False)
+        ax.legend(fontsize=16, ncol=2)
+        fig.tight_layout()
+        fig.savefig(
+            f'{filename}_{rkey}.pdf',
+            dpi=720,
+            bbox_inches='tight'
+        )
+        plt.close()
+
+
+def scatter_of_all_conformers(
+    result_dict,
+    b_result_dict,
+    filename,
+    c,
+    cb,
+    plot_benzalde=True,
+):
+
+    result_keys = result_key_defn()
+
+    for rkey in result_keys:
+        if rkey == 'f_energy':
+            continue
+
+        rkeyinfo = result_keys[rkey]
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        if plot_benzalde:
+            data = {
+                cid: (
+                    b_result_dict[cid]['f_energy'],
+                    b_result_dict[cid][rkey]
+                )
+                for cid in b_result_dict
+            }
+            ydata = [data[cid][0] for cid in data]
+            # Set to relative energies.
+            ydata = [i-min(ydata) for i in ydata]
+            # Set to kJ/mol.
+            ydata = [i*2625.5 for i in ydata]
+            xdata = [data[cid][1] for cid in data]
+            ax.scatter(
+                xdata,
+                ydata,
+                c=cb,
+                alpha=1.0,
+                edgecolor='white',
+                marker='o',
+                s=60,
+                label='+ benzaldehyde',
+            )
+
+        data = {
+            cid: (result_dict[cid]['f_energy'], result_dict[cid][rkey])
+            for cid in result_dict
+        }
+        ydata = [data[cid][0] for cid in data]
+        # Set to relative energies.
+        ydata = [i-min(ydata) for i in ydata]
+        # Set to kJ/mol.
+        ydata = [i*2625.5 for i in ydata]
+        xdata = [data[cid][1] for cid in data]
+        ax.scatter(
+            xdata,
+            ydata,
+            c=c,
+            alpha=1.0,
+            edgecolor='white',
+            marker='o',
+            s=60,
+            label='free',
+        )
+
+        ax.tick_params(axis='both', which='major', labelsize=16)
+        ax.set_xlim(rkeyinfo['lim'])
+        ax.set_ylim(result_keys['f_energy']['lim'])
+        ax.set_xlabel(rkeyinfo['label'], fontsize=16)
+        ax.set_ylabel(
+            result_keys['f_energy']['label'],
+            fontsize=16
+        )
+        ax.legend(fontsize=16)
+        fig.tight_layout()
+        fig.savefig(
+            f'{filename}_{rkey}.pdf',
+            dpi=720,
+            bbox_inches='tight'
+        )
+        plt.close()
 
 
 def main():
@@ -502,6 +680,7 @@ def main():
                 filename=f'{ami}_opls3eall',
                 c=leg_info()[ami]['c'],
                 cb=leg_info()[ami+'b']['c'],
+                plot_benzalde=False,
             )
 
     density_of_all_amines(
@@ -513,166 +692,6 @@ def main():
             opls3e_results,
             filename='topopls3e',
         )
-
-
-def density_of_all_amines(results, filename):
-
-    bottoms = [0, 2, 4, 6]
-
-    # For each property.
-    result_keys = result_key_defn()
-    for rkey in result_keys:
-        rkeyinfo = result_keys[rkey]
-        fig, ax = plt.subplots(figsize=(8, 5))
-
-        # For each amine.
-        for i, ami in enumerate(results):
-            if ami[-1] == 'b':
-                continue
-            result_dict = results[ami]
-
-            # Get data.
-            data = {
-                cid: (
-                    result_dict[cid]['f_energy'],
-                    result_dict[cid][rkey]
-                )
-                for cid in result_dict
-            }
-
-            eydata = {cid: data[cid][0] for cid in data}
-            # Set to relative energies.
-            eydata = {
-                cid: eydata[cid]-min(eydata.values())
-                for cid in eydata
-            }
-            # Set to kJ/mol.
-            eydata = {cid: eydata[cid]*2625.5 for cid in eydata}
-
-            if rkey == 'f_energy':
-                xdata = [eydata[cid] for cid in eydata]
-            else:
-                # Only want lowest 20 kJ/mol.
-                xdata = [
-                    data[cid][1] for cid in data
-                    if eydata[cid] < 20
-                ]
-
-            print(min(xdata), max(xdata))
-
-            # Plot data.
-            xwidth = rkeyinfo['width']
-            xbins = np.arange(
-                rkeyinfo['lim'][0],
-                rkeyinfo['lim'][1] + xwidth,
-                xwidth
-            )
-            ax.hist(
-                x=xdata,
-                bins=xbins,
-                density=True,
-                bottom=bottoms[i],
-                histtype='step',
-                linewidth=3,
-                facecolor=leg_info()[ami]['c'],
-                color=leg_info()[ami]['c'],
-                label=leg_info()[ami]['label'],
-            )
-
-        ax.tick_params(axis='both', which='major', labelsize=16)
-        ax.set_xlim(rkeyinfo['lim'])
-        ax.set_xlabel(rkeyinfo['label'], fontsize=16)
-        ax.set_ylabel('frequency', fontsize=16)
-        ax.set_yticks([])
-        ax.tick_params(left=False)
-        ax.legend(fontsize=16, ncol=2)
-        fig.tight_layout()
-        fig.savefig(
-            f'{filename}_{rkey}.pdf',
-            dpi=720,
-            bbox_inches='tight'
-        )
-        plt.close()
-
-
-def scatter_of_all_conformers(
-    result_dict,
-    b_result_dict,
-    filename,
-    c,
-    cb,
-):
-
-    result_keys = result_key_defn()
-
-    for rkey in result_keys:
-        if rkey == 'f_energy':
-            continue
-
-        rkeyinfo = result_keys[rkey]
-        fig, ax = plt.subplots(figsize=(8, 5))
-
-        data = {
-            cid: (
-                b_result_dict[cid]['f_energy'],
-                b_result_dict[cid][rkey]
-            )
-            for cid in b_result_dict
-        }
-        ydata = [data[cid][0] for cid in data]
-        # Set to relative energies.
-        ydata = [i-min(ydata) for i in ydata]
-        # Set to kJ/mol.
-        ydata = [i*2625.5 for i in ydata]
-        xdata = [data[cid][1] for cid in data]
-        ax.scatter(
-            xdata,
-            ydata,
-            c=cb,
-            alpha=1.0,
-            edgecolor='white',
-            marker='o',
-            s=60,
-            label='+ benzaldehyde',
-        )
-
-        data = {
-            cid: (result_dict[cid]['f_energy'], result_dict[cid][rkey])
-            for cid in result_dict
-        }
-        ydata = [data[cid][0] for cid in data]
-        # Set to relative energies.
-        ydata = [i-min(ydata) for i in ydata]
-        # Set to kJ/mol.
-        ydata = [i*2625.5 for i in ydata]
-        xdata = [data[cid][1] for cid in data]
-        ax.scatter(
-            xdata,
-            ydata,
-            c=c,
-            alpha=1.0,
-            edgecolor='white',
-            marker='o',
-            s=60,
-            label='free',
-        )
-
-        ax.tick_params(axis='both', which='major', labelsize=16)
-        ax.set_xlim(rkeyinfo['lim'])
-        ax.set_ylim(result_keys['f_energy']['lim'])
-        ax.set_xlabel(rkeyinfo['label'], fontsize=16)
-        ax.set_ylabel(
-            result_keys['f_energy']['label'],
-            fontsize=16
-        )
-        ax.legend(fontsize=16)
-        fig.tight_layout()
-        fig.savefig(
-            f'{filename}_{rkey}.pdf',
-            dpi=720,
-            bbox_inches='tight'
-        )
-        plt.close()
 
 
 if __name__ == '__main__':
