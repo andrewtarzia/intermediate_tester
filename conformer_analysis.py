@@ -21,7 +21,6 @@ import json
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
 from scipy.spatial.distance import euclidean
 
 
@@ -328,6 +327,11 @@ def run_etkdg_workflow(amines):
         if exists(ey_out_file):
             with open(ey_out_file, 'r') as f:
                 results[amine] = json.load(f)
+            save_lowest_energy_structures(
+                results=results[amine],
+                name=amine,
+                dir=ami_dir,
+            )
             continue
 
         # Read structure into rdkit.
@@ -468,13 +472,20 @@ def density_of_all_amines(results, filename):
     for rkey in result_keys:
         rkeyinfo = result_keys[rkey]
         if rkey == 'NN_dis':
-            bottoms = [0, 2, 4, 6]
+            bottoms = [12, 8, 4, 0]
             density = True
             ylab = 'frequency'
+            ylim = 24
+        elif rkey == 'NCCN_dihed':
+            bottoms = [0.3, 0.2, 0.1, 0]
+            density = True
+            ylab = 'frequency'
+            ylim = 0.4
         else:
             bottoms = [0, 0, 0, 0]
             density = False
             ylab = 'count'
+            ylim = None
         fig, ax = plt.subplots(figsize=(8, 5))
 
         # For each amine.
@@ -515,7 +526,7 @@ def density_of_all_amines(results, filename):
             # Plot data.
             xwidth = rkeyinfo['width']
             xbins = np.arange(
-                rkeyinfo['lim'][0],
+                rkeyinfo['lim'][0] - xwidth,
                 rkeyinfo['lim'][1] + xwidth,
                 xwidth
             )
@@ -524,8 +535,8 @@ def density_of_all_amines(results, filename):
                 bins=xbins,
                 density=density,
                 bottom=bottoms[i],
-                histtype='step',
-                linewidth=2.5,
+                histtype='stepfilled',
+                linewidth=2.,
                 facecolor=leg_info()[ami]['c'],
                 color=leg_info()[ami]['c'],
                 label=leg_info()[ami]['label'],
@@ -533,15 +544,121 @@ def density_of_all_amines(results, filename):
 
         ax.tick_params(axis='both', which='major', labelsize=16)
         ax.set_xlim(rkeyinfo['lim'])
+        ax.set_ylim(0, ylim)
         ax.set_xlabel(rkeyinfo['label'], fontsize=16)
         ax.set_ylabel(ylab, fontsize=16)
-        if bottoms[-1] != 0:
+        if bottoms[0] != 0:
             ax.set_yticks([])
         ax.tick_params(left=False)
         ax.legend(fontsize=16, ncol=2)
         fig.tight_layout()
         fig.savefig(
             f'{filename}_{rkey}.pdf',
+            dpi=720,
+            bbox_inches='tight'
+        )
+        plt.close()
+
+
+def compare_etkdg_opls(etkdg, opls):
+
+    # For each property.
+    result_keys = result_key_defn()
+    for rkey in result_keys:
+        rkeyinfo = result_keys[rkey]
+        if rkey == 'NN_dis':
+            bottoms = [12, 0]
+            density = True
+            ylab = 'frequency'
+            ylim = 24
+        elif rkey == 'NCCN_dihed':
+            bottoms = [0.3, 0]
+            density = True
+            ylab = 'frequency'
+            ylim = 0.4
+        else:
+            continue
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        # For amine 1 only.
+        etkdg_dict = etkdg['ami1']
+        opls_dict = opls['ami1']
+
+        # Get data.
+        etkdg_data = {
+            cid: (
+                etkdg_dict[cid]['f_energy'],
+                etkdg_dict[cid][rkey]
+            )
+            for cid in etkdg_dict
+        }
+        opls_data = {
+            cid: (
+                opls_dict[cid]['f_energy'],
+                opls_dict[cid][rkey]
+            )
+            for cid in opls_dict
+        }
+        min_etkdg_s = [
+            etkdg_data[cid][1]
+            for cid in etkdg_data
+            if etkdg_data[cid][0] == min([
+                    etkdg_data[i][0] for i in etkdg_data
+                ])
+        ][0]
+        min_opls_s = opls_data['0'][1]
+
+        # Show all.
+        etkdg_xdata = [etkdg_data[cid][1] for cid in etkdg_data]
+        opls_xdata = [opls_data[cid][1] for cid in opls_data]
+        print(min(etkdg_xdata), max(etkdg_xdata))
+        print(min(opls_xdata), max(opls_xdata))
+
+        # Plot data.
+        xwidth = rkeyinfo['width']
+        xbins = np.arange(
+            rkeyinfo['lim'][0] - xwidth,
+            rkeyinfo['lim'][1] + xwidth,
+            xwidth
+        )
+        ax.hist(
+            x=etkdg_xdata,
+            bins=xbins,
+            density=density,
+            bottom=bottoms[0],
+            histtype='stepfilled',
+            linewidth=2.,
+            facecolor='#FF5733',
+            color='#FF5733',
+            label='etkdg',
+        )
+        ax.hist(
+            x=opls_xdata,
+            bins=xbins,
+            density=density,
+            bottom=bottoms[1],
+            histtype='stepfilled',
+            linewidth=2.,
+            facecolor='#33DBFF',
+            color='#33DBFF',
+            label='opls',
+        )
+
+        ax.axvline(x=min_etkdg_s, c='#FF5733', lw=2, linestyle='--')
+        ax.axvline(x=min_opls_s, c='#33DBFF', lw=2, linestyle='--')
+
+        ax.tick_params(axis='both', which='major', labelsize=16)
+        ax.set_xlim(rkeyinfo['lim'])
+        ax.set_ylim(0, ylim)
+        ax.set_xlabel(rkeyinfo['label'], fontsize=16)
+        ax.set_ylabel(ylab, fontsize=16)
+        if bottoms[0] != 0:
+            ax.set_yticks([])
+        ax.tick_params(left=False)
+        ax.legend(fontsize=16, ncol=2)
+        fig.tight_layout()
+        fig.savefig(
+            f'etkdgvsopls_{rkey}.pdf',
             dpi=720,
             bbox_inches='tight'
         )
@@ -630,6 +747,27 @@ def scatter_of_all_conformers(
         plt.close()
 
 
+def save_lowest_energy_structures(results, name, dir):
+
+    # Lowest 10 conformers by energy.
+    low_e_conformers = [
+        x
+        for _, x in sorted(
+            zip(
+                [results[i]['f_energy'] for i in results],
+                [i for i in results]
+            ),
+            key=lambda pair: pair[0]
+        )
+    ][:10]
+    struct_files = [
+        f'{dir}/conformer_{i}.mol' for i in low_e_conformers
+    ]
+    for i, s in enumerate(struct_files):
+        mol = stk.BuildingBlock.init_from_file(s)
+        mol.write(f'{name}_lowe_{i}.mol')
+
+
 def main():
     if len(sys.argv) != 2:
         print(
@@ -692,6 +830,7 @@ def main():
             opls3e_results,
             filename='topopls3e',
         )
+        compare_etkdg_opls(etkdg_results, opls3e_results)
 
 
 if __name__ == '__main__':
