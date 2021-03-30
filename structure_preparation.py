@@ -31,6 +31,7 @@ def optimize_structure(name, mol, solvent):
         restricted=False,
     )
     mol = ff.optimize(mol)
+    mol.write(f'{name}_ff.mol')
 
     # OPLS MM conf search
     # MD process - run MD, collect N conformers, optimize each,
@@ -48,6 +49,7 @@ def optimize_structure(name, mol, solvent):
         simulation_time=5000,  # ps
     )
     mol = md.optimize(mol)
+    mol.write(f'{name}_md.mol')
 
     # xTB opt.
     print(f'doing xtb opt of {name}')
