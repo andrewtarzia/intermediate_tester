@@ -26,7 +26,7 @@ def optimize_structure(name, mol, solvent):
 
     print('doing XTB optimisation')
     xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb-190806/bin/xtb',
+        xtb_path='/home/atarzia/software/xtb-6.3.2/bin/xtb',
         output_dir=f'xtb_data/opt_{name}',
         gfn_version=2,
         num_cores=6,
@@ -53,7 +53,7 @@ def get_energy(name, mol, solvent):
         solvent_str, solvent_grid = solvent
     print(f'getting energy of {name}')
     xtb_energy = stk.XTBEnergy(
-        xtb_path='/home/atarzia/software/xtb-190806/bin/xtb',
+        xtb_path='/home/atarzia/software/xtb-6.3.2/bin/xtb',
         output_dir=f'xtb_data/ey_{name}',
         num_cores=6,
         charge=0,
