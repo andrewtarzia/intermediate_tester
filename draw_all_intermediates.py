@@ -48,7 +48,7 @@ def main():
         print(smi)
         rdk_mol = rdkit.MolFromSmiles(smi)
 
-        draw_mol_to_svg(rdk_mol, f'{name}.svg')
+        draw_mol_to_svg(rdk_mol, f'viz/{name}.svg')
 
 
 if __name__ == '__main__':
