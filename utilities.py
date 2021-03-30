@@ -38,7 +38,7 @@ def read_ey(file):
         lines = f.readlines()
         ey = float(lines[0].rstrip())
 
-    return ey * 2625.5
+    return ey
 
 
 def interplot_xpos():
