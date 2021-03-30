@@ -37,7 +37,7 @@ def optimize_structure(name, mol, solvent):
     # MD process - run MD, collect N conformers, optimize each,
     # return lowest energy conformer
     print(f'doing MD opt of {name}')
-    md = stk.MacroModelMD(
+    md = stko.MacroModelMD(
         macromodel_path='/home/atarzia/software/schrodinger_install',
         output_dir=f'MD_data/{name}_MDout',
         timeout=None,
