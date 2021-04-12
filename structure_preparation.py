@@ -105,6 +105,7 @@ def optimisation_sequence(mol_file):
 
     name = mol_file.replace('.mol', '')
     output_file = mol_file.replace('.mol', '_opt.mol')
+    xyz_output_file = mol_file.replace('.mol', '_opt.xyz')
     if not exists(output_file):
         # Read molecule into stk.
         mol = stk.BuildingBlock.init_from_file(mol_file)
@@ -116,6 +117,7 @@ def optimisation_sequence(mol_file):
         )
         # Output.
         mol.write(output_file)
+        mol.write(xyz_output_file)
 
 
 def energy_calculation(mol_file, solvent):
