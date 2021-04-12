@@ -177,15 +177,15 @@ def main():
         print(f'doing {iname}')
         optimisation_sequence(mol_file=f'{iname}.mol')
         energy = energy_calculation(
-            mol_file=f'{p}_opt.mol',
+            mol_file=f'{iname}_opt.mol',
             solvent=None,
         )
-        gas_energy_dict[p] = energy  # a.u.
+        gas_energy_dict[iname] = energy  # a.u.
         energy = energy_calculation(
-            mol_file=f'{p}_opt.mol',
+            mol_file=f'{iname}_opt.mol',
             solvent=('chcl3', 'verytight'),
         )
-        chcl3_energy_dict[p] = energy  # a.u.
+        chcl3_energy_dict[iname] = energy  # a.u.
         print('..done..')
 
     df = pd.DataFrame({
