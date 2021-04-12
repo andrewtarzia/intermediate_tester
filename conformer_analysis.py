@@ -606,7 +606,7 @@ def compare_etkdg_opls(etkdg, opls):
                     etkdg_data[i][0] for i in etkdg_data
                 ])
         ][0]
-        min_opls_s = opls_data['0'][1]
+        # min_opls_s = opls_data['0'][1]
 
         # Show all.
         etkdg_xdata = [etkdg_data[cid][1] for cid in etkdg_data]
@@ -645,7 +645,7 @@ def compare_etkdg_opls(etkdg, opls):
         )
 
         ax.axvline(x=min_etkdg_s, c='#FF5733', lw=2, linestyle='--')
-        ax.axvline(x=min_opls_s, c='#33DBFF', lw=2, linestyle='--')
+        # ax.axvline(x=min_opls_s, c='#33DBFF', lw=2, linestyle='--')
 
         ax.tick_params(axis='both', which='major', labelsize=16)
         ax.set_xlim(rkeyinfo['lim'])
