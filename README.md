@@ -6,13 +6,12 @@ Build and optimise cage intermediates
 * Run:
     * draw_all_intermediates.py
         * produces 'name'.svg image of structure from rdkit
-    * FF_optimise_all_structures.py
-        * produces 'name'_opt.mol
-    * CREST_conformer_search.py
-        * produces 'name'_optC.mol - lowest energy conformer from CREST
-    * xtb_opt_and_energy.py
-        * produces 'name'_opt_xtb.{mol, ey, fey}
+    * structure_preparation.py
+        * Runs opls3e conformer search and optimisation -> '{name}_ff.mol', '{name}_md.mol'
+        * Then runs xTB optimisation -> '{name}_opt.{mol, ey}' [multiple ey files for multiple solvents]
     * calculate_formation_energies.py
+        * produces XX.csv with formation energies of all species
+    * plot_formation_energies.py
         * produces plots:
             * fe_perimine.pdf
             * fe_total.pdf
