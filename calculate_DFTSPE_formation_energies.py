@@ -28,7 +28,7 @@ def main():
     print(ey_file)
     extracted_ey = pd.read_csv(ey_file)
     extracted_ey['clean_name'] = [
-        i.split('_so')[0] for i in extracted_ey['name']
+        i.split('_opt')[0] for i in extracted_ey['name']
     ]
     energy_dict = {
         i: j

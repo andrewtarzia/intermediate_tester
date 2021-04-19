@@ -105,6 +105,7 @@ def plot_FE(
 def main():
     if len(sys.argv) != 3:
         print('csv file with formation energies and output prefix')
+        sys.exit()
     else:
         fe_csv = sys.argv[1]
         output_prefix = sys.argv[2]
