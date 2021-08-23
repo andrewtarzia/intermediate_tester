@@ -14,6 +14,7 @@ Date Created: 07 Dec 2020
 from rdkit.Chem import AllChem as rdkit
 import sys
 import stk
+# from scipy.stats import gaussian_kde
 import stko
 from os import mkdir
 from os.path import exists, join
@@ -34,13 +35,13 @@ def result_key_defn():
         },
         'NN_dis': {
             'label': r'N-N distance [$\mathrm{\AA}$]',
-            'lim': (2, 4),
-            'width': 0.02,
+            'lim': (2.5, 4),
+            'width': 0.05,
         },
         'NCCN_dihed': {
             'label': r'NCCN dihedral [$^{\circ}$]',
             'lim': (0, 200),
-            'width': 2,
+            'width': 5,
         },
     }
 
@@ -49,19 +50,19 @@ def leg_info():
     return {
         'ami1': {
             'label': 'amine-1',
-            'c': '#FF5733'
+            'c': '#D81B60'
         },
         'ami2': {
             'label': 'amine-2',
-            'c': '#FFC300'
+            'c': '#1E88E5'
         },
         'ami3': {
             'label': 'amine-3 (CC3)',
-            'c': '#48C9B0'
+            'c': '#FFC107'
         },
         'ami4': {
             'label': 'amine-4 (CC1)',
-            'c': '#5499C7'
+            'c': '#004D40'
         },
         'ami1b': {
             'label': 'amine-1 + benzaldehyde',
@@ -93,6 +94,7 @@ def calculate_NN_distance(stk_mol):
         u=position_matrix[N_atom_ids[0]],
         v=position_matrix[N_atom_ids[1]],
     )
+    print(distance)
     return float(distance)
 
 
@@ -371,6 +373,8 @@ def run_etkdg_workflow(amines):
 
             # Calculate N-N distance and NCCN dihedral.
             NN_dist = calculate_NN_distance(conf)
+            if NN_dist > 3:
+                print(cid, NN_dist, amine)
             NCCN_dihed = calculate_NCCN_dihedral(conf)
             res[cid] = {
                 'f_energy': f_energy,
@@ -472,21 +476,24 @@ def density_of_all_amines(results, filename):
     for rkey in result_keys:
         rkeyinfo = result_keys[rkey]
         if rkey == 'NN_dis':
-            bottoms = [12, 8, 4, 0]
+            # bottoms = [12, 8, 4, 0]
             density = True
             ylab = 'frequency'
-            ylim = 24
+            # ylim = 24
         elif rkey == 'NCCN_dihed':
-            bottoms = [0.3, 0.2, 0.1, 0]
+            # bottoms = [0.6, 0.5, 0.15, 0]
             density = True
             ylab = 'frequency'
-            ylim = 0.4
+            # ylim = 0.7
         else:
-            bottoms = [0, 0, 0, 0]
+            # bottoms = [0, 0, 0, 0]
             density = False
             ylab = 'count'
-            ylim = None
-        fig, ax = plt.subplots(figsize=(8, 5))
+            # ylim = None
+
+        fig, ax = plt.subplots(4, 1, sharex=True, figsize=(8, 7))
+        # Remove horizontal space between axes
+        fig.subplots_adjust(hspace=0)
 
         # For each amine.
         for i, ami in enumerate(results):
@@ -515,42 +522,64 @@ def density_of_all_amines(results, filename):
             if rkey == 'f_energy':
                 xdata = [eydata[cid] for cid in eydata]
             else:
-                # Only want lowest 20 kJ/mol.
+                # Only want lowest 10 kJ/mol.
                 xdata = [
                     data[cid][1] for cid in data
-                    if eydata[cid] < 20
+                    if eydata[cid] < 10
                 ]
 
             print(min(xdata), max(xdata))
 
             # Plot data.
+            # density = gaussian_kde(
+            #     xdata,
+            #     bw_method=0.3,
+            # )
             xwidth = rkeyinfo['width']
+            # xs = np.linspace(
+            #     rkeyinfo['lim'][0] - xwidth,
+            #     rkeyinfo['lim'][1] + xwidth,
+            #     1000,
+            # )
+            # ax.plot(
+            #     xs, density(xs),
+            #     linewidth=2.,
+            #     color=leg_info()[ami]['c'],
+            #     alpha=1.0,
+            #     label=leg_info()[ami]['label'],
+            # )
+
             xbins = np.arange(
                 rkeyinfo['lim'][0] - xwidth,
                 rkeyinfo['lim'][1] + xwidth,
                 xwidth
             )
-            ax.hist(
+            ax[i].hist(
                 x=xdata,
                 bins=xbins,
                 density=density,
-                bottom=bottoms[i],
+                # bottom=bottoms[i],
                 histtype='stepfilled',
-                linewidth=2.,
+                # histtype='step',  fill=False,
+                stacked=True,
+                linewidth=1.,
                 facecolor=leg_info()[ami]['c'],
-                color=leg_info()[ami]['c'],
+                alpha=1.0,
+                # color=leg_info()[ami]['c'],
+                color='white',
+                edgecolor='white',
                 label=leg_info()[ami]['label'],
             )
+            ax[i].set_yticks([])
+            # ax[i].set_ylim(-1, 1)
 
-        ax.tick_params(axis='both', which='major', labelsize=16)
-        ax.set_xlim(rkeyinfo['lim'])
-        ax.set_ylim(0, ylim)
-        ax.set_xlabel(rkeyinfo['label'], fontsize=16)
-        ax.set_ylabel(ylab, fontsize=16)
-        if bottoms[0] != 0:
-            ax.set_yticks([])
-        ax.tick_params(left=False)
-        ax.legend(fontsize=16, ncol=2)
+            ax[i].set_xlim(rkeyinfo['lim'])
+            ax[i].tick_params(left=False, bottom=False)
+            # ax.set_ylim(0, ylim)
+        ax[3].tick_params(labelsize=16, bottom=True)
+        ax[3].set_xlabel(rkeyinfo['label'], fontsize=16)
+        ax[3].set_ylabel(ylab, fontsize=16)
+        fig.legend(fontsize=16, ncol=2)
         fig.tight_layout()
         fig.savefig(
             f'{filename}_{rkey}.pdf',
