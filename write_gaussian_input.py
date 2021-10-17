@@ -3,7 +3,7 @@
 # Distributed under the terms of the MIT License.
 
 """
-Perform optimisation and energy calculations on all structures.
+Write input files for Gaussian single point energy calculation.
 
 Author: Andrew Tarzia
 
@@ -77,11 +77,7 @@ def write_molecule_section(struct, restart=False):
     return string
 
 
-def write_run_file(name, directory, infile, np):
-
-    runfile = f'{directory}/{name}.sh'
-
-    runlines = f"g16 < {infile} > {infile.replace('.gau', '.log')}\n"
+def run_file_top_line(name, np):
 
     string = (
         f'#PBS -N _{name}\n'
@@ -89,11 +85,8 @@ def write_run_file(name, directory, infile, np):
         '#PBS -l walltime=72:00:00\n'
         'module load gaussian/g16-c01-avx\n\n'
         'cd $PBS_O_WORKDIR\n\n'
-        f'{runlines}'
     )
-
-    with open(runfile, 'w') as f:
-        f.write(string)
+    return string
 
 
 def write_input_file(
@@ -125,33 +118,54 @@ def write_input_file(
         f.write(string)
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def main():
 
     num_proc = 32
     structures = glob.glob('*_opt.mol')
+    directory = 'xtb_spe_DFT'
 
-    for s in structures:
-        mol = stk.BuildingBlock.init_from_file(s)
-        sname = s.replace('.mol', '')
-        gau_inp = s.replace('.mol', '.gau')
+    _solvents = {
+        'gas': None,
+        'dcm': r'SCRF=(PCM,Solvent=Dichloromethane)',
+        'cfm': r'SCRF=(PCM,Solvent=Chloroform)',
+        # r'SCRF=(PCM,Solvent=DiMethylSulfoxide)'
+    }
 
-        write_input_file(
-            infile=gau_inp,
-            struct=mol,
-            np=num_proc,
-            directory='./',
-            method='PBE1PBE',
-            runtype='SP',
-            org_basis='Def2TZVP',
-            solvent=None,
-            # solvent=r'SCRF=(PCM,Solvent=DiMethylSulfoxide)',
-        )
-        write_run_file(
-            name=sname,
-            directory='./',
-            infile=gau_inp,
-            np=num_proc
-        )
+    run_lines = []
+    for solv in _solvents:
+        for s in structures:
+            mol = stk.BuildingBlock.init_from_file(s)
+            gau_inp = s.replace('.mol', f'_{solv}.gau')
+
+            write_input_file(
+                infile=gau_inp,
+                struct=mol,
+                np=num_proc,
+                directory=directory,
+                method='PBE1PBE',
+                runtype='SP',
+                org_basis='Def2TZVP',
+                solvent=_solvents[solv],
+            )
+            run_line = (
+                f"g16 < {gau_inp} > "
+                f"{gau_inp.replace('.gau', '.log')}\n"
+            )
+            run_lines.append(run_line)
+
+    # To add to a multiple run .sh file.
+    for i, rls in enumerate(chunks(run_lines, 20)):
+        with open(f'{directory}/spes_{i}.sh', 'w') as f:
+            f.write(run_file_top_line(name=f's_{i}', np=num_proc))
+            f.write('\n')
+            for rl in rls:
+                f.write(rl)
 
 
 if __name__ == '__main__':
