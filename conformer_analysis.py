@@ -601,10 +601,10 @@ def compare_etkdg_opls(etkdg, opls):
             ylab = 'frequency'
             ylim = 24
         elif rkey == 'NCCN_dihed':
-            bottoms = [0.3, 0]
+            bottoms = [0.1, 0]
             density = True
             ylab = 'frequency'
-            ylim = 0.4
+            ylim = 0.2
         else:
             continue
 
@@ -628,20 +628,10 @@ def compare_etkdg_opls(etkdg, opls):
             )
             for cid in opls_dict
         }
-        min_etkdg_s = [
-            etkdg_data[cid][1]
-            for cid in etkdg_data
-            if etkdg_data[cid][0] == min([
-                    etkdg_data[i][0] for i in etkdg_data
-                ])
-        ][0]
-        # min_opls_s = opls_data['0'][1]
 
         # Show all.
         etkdg_xdata = [etkdg_data[cid][1] for cid in etkdg_data]
         opls_xdata = [opls_data[cid][1] for cid in opls_data]
-        print(min(etkdg_xdata), max(etkdg_xdata))
-        print(min(opls_xdata), max(opls_xdata))
 
         # Plot data.
         xwidth = rkeyinfo['width']
@@ -650,30 +640,41 @@ def compare_etkdg_opls(etkdg, opls):
             rkeyinfo['lim'][1] + xwidth,
             xwidth
         )
-        ax.hist(
-            x=etkdg_xdata,
+        hist, bin_edges = np.histogram(
+            a=etkdg_xdata,
             bins=xbins,
             density=density,
-            bottom=bottoms[0],
-            histtype='stepfilled',
-            linewidth=2.,
-            facecolor='#FF5733',
-            color='#FF5733',
-            label='etkdg',
         )
-        ax.hist(
-            x=opls_xdata,
-            bins=xbins,
-            density=density,
-            bottom=bottoms[1],
-            histtype='stepfilled',
-            linewidth=2.,
-            facecolor='#33DBFF',
-            color='#33DBFF',
-            label='opls',
+        ax.bar(
+            bin_edges[:-1],
+            hist,
+            bottom=bottoms[0],
+            align='edge',
+            alpha=1.0,
+            width=xwidth,
+            color='#FF5733',
+            edgecolor='k',
+            label='ETKDGv3',
         )
 
-        ax.axvline(x=min_etkdg_s, c='#FF5733', lw=2, linestyle='--')
+        hist, bin_edges = np.histogram(
+            a=opls_xdata,
+            bins=xbins,
+            density=density,
+        )
+        ax.bar(
+            bin_edges[:-1],
+            hist,
+            bottom=bottoms[1],
+            align='edge',
+            alpha=1.0,
+            width=xwidth,
+            color='#33DBFF',
+            edgecolor='k',
+            label='Macromodel/OPLS3e',
+        )
+
+        # ax.axvline(x=min_etkdg_s, c='#FF5733', lw=2, linestyle='--')
         # ax.axvline(x=min_opls_s, c='#33DBFF', lw=2, linestyle='--')
 
         ax.tick_params(axis='both', which='major', labelsize=16)
