@@ -74,18 +74,18 @@ def interplot_leg():
     return {
         'ami1': {
             'label': 'amine-1',
-            'c': '#FF5733'
+            'c': '#D81B60'
         },
         'ami2': {
             'label': 'amine-2',
-            'c': '#FFC300'
+            'c': '#1E88E5'
         },
         'ami3': {
             'label': 'amine-3 (CC3)',
-            'c': '#48C9B0'
+            'c': '#FFC107'
         },
         'ami4': {
             'label': 'amine-4 (CC1)',
-            'c': '#5499C7'
+            'c': '#004D40'
         }
     }

@@ -100,6 +100,150 @@ def plot_FE(
     ax.set_xticklabels(list(X_pos.keys()))
     fig.tight_layout()
     fig.savefig(title, dpi=720, bbox_inches='tight')
+    plt.close()
+
+
+def manu_plot_FE(
+    X,
+    Y,
+    leg_info,
+    names,
+    ylbl,
+    X_pos,
+    title,
+    ylim,
+    amine=None
+):
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for ami in X:
+        count2 = 0
+        print(f'doing fe of {ami}')
+        if amine is not None:
+            if amine != ami:
+                continue
+        lab = leg_info[ami]['label']
+        c = leg_info[ami]['c']
+        for i in range(len(X[ami])):
+            X_value = X[ami][i]
+            Y_value = Y[ami][i] - min(Y[ami])
+            print(title, names[ami][i], X_value, Y_value)
+            if names[ami][i][-1] == '2':
+                if count2 == 1:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+                        m='o',
+                        label=f'{lab}'
+                    )
+                else:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        m='o',
+                        C=c
+                    )
+                count2 += 1
+
+    ax.legend(fontsize=16)
+    ax.axhline(y=0, c='k', alpha=0.2, lw=2)
+    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.set_xlabel('intermediate size', fontsize=16)
+    ax.set_xlim(0, 55)
+    ax.set_ylim(ylim)
+    ax.set_ylabel(ylbl, fontsize=16)
+    ax.set_xticks(list(X_pos.values()))
+    ax.set_xticklabels(list(X_pos.keys()))
+    fig.tight_layout()
+    fig.savefig(title, dpi=720, bbox_inches='tight')
+    plt.close()
+
+
+def manu_plot_FE_withaminal(
+    X,
+    Y,
+    leg_info,
+    names,
+    same_sizers,
+    ylbl,
+    X_pos,
+    title,
+    ylim,
+    amine=None
+):
+
+    fig, ax = plt.subplots(figsize=(8, 3))
+    for ami in X:
+        count1 = 0
+        count2 = 0
+        print(f'doing fe of {ami}')
+        if amine is not None:
+            if amine != ami:
+                continue
+        lab = leg_info[ami]['label']
+        c = leg_info[ami]['c']
+        for i in range(len(X[ami])):
+            X_value = X[ami][i]
+            Y_value = Y[ami][i] - min(Y[ami])
+            print(title, names[ami][i], X_value, Y_value)
+            if names[ami][i][-1] == '2':
+                if count2 == 1:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+                        m='o',
+                        label=f'{lab}:imine'
+                    )
+                else:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+                        m='o'
+                    )
+                count2 += 1
+            else:
+                if count1 == 0:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+                        label=f'{lab}:aminal',
+                    )
+                else:
+                    flat_line(
+                        ax,
+                        x=X_value,
+                        y=Y_value,
+                        w=1,
+                        C=c,
+
+                    )
+                count1 += 1
+
+    ax.legend(fontsize=16)
+    ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.set_xlabel('cluster size', fontsize=16)
+    ax.set_xlim(0, 55)
+    ax.set_ylim(ylim)
+    ax.set_ylabel(ylbl, fontsize=16)
+    ax.set_xticks(list(X_pos.values()))
+    ax.set_xticklabels(list(X_pos.keys()))
+    fig.tight_layout()
+    fig.savefig(title, dpi=720, bbox_inches='tight')
+    plt.close()
 
 
 def main():
@@ -176,10 +320,21 @@ def main():
         names=names,
         same_sizers=same_sizers,
         ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
-        # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
         X_pos=xpos,
         title=f'{output_prefix}_fe_perimine.pdf',
         ylim=(-10, 110),
+        amine=None
+    )
+    manu_plot_FE(
+        X=X_values,
+        Y=Y_values_pI,
+        leg_info=leg_info,
+        names=names,
+        ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+        # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
+        X_pos=xpos,
+        title=f'manu_{output_prefix}_fe_perimine.pdf',
+        ylim=(0, 45),
         amine=None
     )
 
@@ -211,6 +366,22 @@ def main():
             X_pos=xpos,
             title=f'{output_prefix}_fe_perimine_{ami}.pdf',
             ylim=(-10, 110),
+            amine=ami
+        )
+        manu_plot_FE_withaminal(
+            X=X_values,
+            Y=Y_values_pI,
+            leg_info=leg_info,
+            names=names,
+            same_sizers=same_sizers,
+            ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+            # ylbl=(
+            #   'free energy of formation\nper imine bond '
+            #   '[kJmol$^{-1}$]'
+            # ),
+            X_pos=xpos,
+            title=f'manu_{output_prefix}_fe_perimine_{ami}.pdf',
+            ylim=(0, 45),
             amine=ami
         )
         plot_FE(
