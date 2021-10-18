@@ -18,7 +18,10 @@ Build and optimise cage intermediates
             * fe_perimine_ami{i}.pdf
 
 # Conformer analysis:
-* conformer_analysis.py will run conformer generation with the ETKDG algorithm in `rdkit` plot the distribution of geometrical properties
-    * All energies and free energies calculated performed with GFN2-xTB (version 6.3.2)
-    * If conformer generation with macromodel/maestro is performed manually, these can be linked in for analysis
+* conformer_analysis.py will run conformer generation with the ETKDGv3 algorithm in `rdkit` plot the distribution of geometrical properties
+    * Amines are defined in the script for the molecules to analyse by their SMILES string
+    * All conformers optimised with GFN2-xTB (version 6.3.2)
+    * All energies and free energies calculated with GFN2-xTB (version 6.3.2)
+    * If conformer generation with macromodel/maestro is performed manually, these can be linked in for analysis (a CLI option for the script to this directory allows this)
+        * All conformers optimised with GFN2-xTB (version 6.3.2)
     * The 10 lowest energy conformers will be saved as {amine}_lowe_{i}.mol in the working directory
