@@ -469,7 +469,7 @@ def run_opls3e_workflow(amines, structure_dir):
     return results
 
 
-def density_of_all_amines(results, filename):
+def density_of_all_amines(results, filename, ignore_b):
 
     # For each property.
     result_keys = result_key_defn()
@@ -490,6 +490,106 @@ def density_of_all_amines(results, filename):
             density = False
             ylab = 'count'
             # ylim = None
+
+        fig, ax = plt.subplots(8, 1, sharex=True, figsize=(8, 10))
+        # Remove horizontal space between axes
+        fig.subplots_adjust(hspace=0)
+
+        # For each amine.
+        amine_names = [
+            'ami1', 'ami1b', 'ami2', 'ami2b',
+            'ami3', 'ami3b', 'ami4', 'ami4b',
+        ]
+        for i, ami in enumerate(amine_names):
+            if ignore_b:
+                if ami[-1] == 'b':
+                    continue
+            result_dict = results[ami]
+
+            # Get data.
+            data = {
+                cid: (
+                    result_dict[cid]['f_energy'],
+                    result_dict[cid][rkey]
+                )
+                for cid in result_dict
+            }
+
+            eydata = {cid: data[cid][0] for cid in data}
+            # Set to relative energies.
+            eydata = {
+                cid: eydata[cid]-min(eydata.values())
+                for cid in eydata
+            }
+            # Set to kJ/mol.
+            eydata = {cid: eydata[cid]*2625.5 for cid in eydata}
+
+            if rkey == 'f_energy':
+                xdata = [eydata[cid] for cid in eydata]
+            else:
+                xdata = [
+                    data[cid][1] for cid in data
+                ]
+            print(ami, rkey)
+            print(min(xdata), max(xdata))
+
+            # Plot data.
+            # density = gaussian_kde(
+            #     xdata,
+            #     bw_method=0.3,
+            # )
+            xwidth = rkeyinfo['width']
+            # xs = np.linspace(
+            #     rkeyinfo['lim'][0] - xwidth,
+            #     rkeyinfo['lim'][1] + xwidth,
+            #     1000,
+            # )
+            # ax.plot(
+            #     xs, density(xs),
+            #     linewidth=2.,
+            #     color=leg_info()[ami]['c'],
+            #     alpha=1.0,
+            #     label=leg_info()[ami]['label'],
+            # )
+
+            xbins = np.arange(
+                rkeyinfo['lim'][0] - xwidth,
+                rkeyinfo['lim'][1] + xwidth,
+                xwidth
+            )
+            ax[i].hist(
+                x=xdata,
+                bins=xbins,
+                density=density,
+                # bottom=bottoms[i],
+                histtype='stepfilled',
+                # histtype='step',  fill=False,
+                stacked=True,
+                linewidth=1.,
+                facecolor=leg_info()[ami]['c'],
+                alpha=1.0,
+                # color=leg_info()[ami]['c'],
+                # color='white',
+                edgecolor='k',
+                label=leg_info()[ami]['label'],
+            )
+            ax[i].set_yticks([])
+            # ax[i].set_ylim(-1, 1)
+
+            ax[i].set_xlim(rkeyinfo['lim'])
+            ax[i].tick_params(left=False, bottom=False)
+            # ax.set_ylim(0, ylim)
+        ax[7].tick_params(labelsize=16, bottom=True)
+        ax[7].set_xlabel(rkeyinfo['label'], fontsize=16)
+        ax[7].set_ylabel(ylab, fontsize=16)
+        fig.legend(fontsize=16, ncol=2)
+        fig.tight_layout()
+        fig.savefig(
+            f'{filename}_{rkey}.pdf',
+            dpi=720,
+            bbox_inches='tight'
+        )
+        plt.close()
 
         fig, ax = plt.subplots(4, 1, sharex=True, figsize=(8, 7))
         # Remove horizontal space between axes
