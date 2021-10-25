@@ -17,85 +17,104 @@ import pandas as pd
 from reactions import landscape
 
 
+def clean_extracted_dictionary(extracted_energy_file):
+    extracted_ey = pd.read_csv(extracted_energy_file)
+    extracted_ey['clean_name'] = [
+        i.split('_opt')[0] for i in extracted_ey['name']
+    ]
+    extracted_ey['solvent'] = [
+        i.split('_opt_')[1] for i in extracted_ey['name']
+    ]
+
+    print(extracted_ey)
+    return extracted_ey
+
+
+def get_molecule_energy_from_frame(frame, molecule_name, key):
+    t_frame = frame[frame['clean_name'] == molecule_name]
+    if len(t_frame) != 1:
+        raise ValueError(
+            'Either no, or multiple instances of '
+            f'{molecule_name} found in dataframe.'
+        )
+
+    return float(t_frame[key])
+
+
 def main():
     if len(sys.argv) != 3:
-        print('csv file with DFT energies and output csv is required')
+        print(
+            'csv file with DFT energies and output csv is required'
+        )
         sys.exit()
     else:
         ey_file = sys.argv[1]
         output_name = sys.argv[2]
 
-    print(ey_file)
-    extracted_ey = pd.read_csv(ey_file)
-    extracted_ey['clean_name'] = [
-        i.split('_opt')[0] for i in extracted_ey['name']
-    ]
-    energy_dict = {
-        i: j
-        for i, j in zip(
-            extracted_ey['clean_name'],
-            extracted_ey['energy']
-        )
-    }
-    print(energy_dict)
-    lscp = landscape()
-    df = pd.DataFrame({
-        'intname': [i['intname'] for i in lscp],
-        'long-name': [i['long-name'] for i in lscp],
-    })
+    _solvents = ('gas', 'dcm', 'cfm')
+    _columns = (
+        'intname', 'long-name', 'solvent', 'energy_au',
+        'prodenergy_au', 'reactenergy_au', 'formenergy_au',
+        'formenergypermine_au',
+    )
 
-    energies = []
-    prod_energies = []
-    react_energies = []
-    formation_energies = []
-    formation_energies_per_imine = []
+    energy_frame = clean_extracted_dictionary(ey_file)
+
+    lscp = landscape()
+    output_df = pd.DataFrame(columns=_columns)
+
+    count = 1
     for intermediate in lscp:
         iname = intermediate['intname']
-        if intermediate['intname'] in energy_dict:
-            # Get energies.
-            ey = energy_dict[iname]
+        lname = intermediate['long-name']
+        for solv in _solvents:
+            s_frame = energy_frame[energy_frame['solvent'] == solv]
+            # Get total energy.
+            ey = get_molecule_energy_from_frame(
+                frame=s_frame,
+                molecule_name=iname,
+                key='energy',
+            )
+            # Sum product energies.
             prodey = sum(
                 [
-                    energy_dict[i.replace('_opt_xtb', '')]
+                    get_molecule_energy_from_frame(
+                        frame=s_frame,
+                        # Modify name from xtb code.
+                        molecule_name=i.replace('_opt_xtb', ''),
+                        key='energy',
+                    )
                     for i in intermediate['prod']
                 ]
             )
+            # Sum reactant energies.
             reactey = sum(
                 [
-                    energy_dict[i.replace('_opt_xtb', '')]
+                    get_molecule_energy_from_frame(
+                        frame=s_frame,
+                        # Modify name from xtb code.
+                        molecule_name=i.replace('_opt_xtb', ''),
+                        key='energy',
+                    )
                     for i in intermediate['react']
                 ]
             )
+
+            # Get reactant energies.
             formey = prodey - reactey
             formeyperimine = formey / intermediate['no.imine']
             if formey > 0:
-                input('he')
+                print(intermediate, solv, formey, formeyperimine)
 
-            energies.append(ey)
-            prod_energies.append(prodey)
-            react_energies.append(reactey)
-            formation_energies.append(formey)
-            formation_energies_per_imine.append(formeyperimine)
-        else:
-            energies.append(None)
-            prod_energies.append(None)
-            react_energies.append(None)
-            formation_energies.append(None)
-            formation_energies_per_imine.append(None)
+            # Add series to dataframe.
+            output_df.loc[count] = [
+                iname, lname, solv, ey, prodey, reactey, formey,
+                formeyperimine,
+            ]
+            count += 1
 
-    df['energy_au'] = energies
-    df['prodenergy_au'] = prod_energies
-    df['reactenergy_au'] = react_energies
-    df['formenergy_au'] = formation_energies
-    df['formenergypermine_au'] = formation_energies_per_imine
-    df['formenergy_kjmol'] = [
-        None if i is None else i*2625.5 for i in formation_energies
-    ]
-    df['formenergypermine_kjmol'] = [
-        None if i is None else i*2625.5 for i in formation_energies_per_imine
-    ]
-    print(df)
-    df.to_csv(output_name, index=False)
+    print(output_df)
+    output_df.to_csv(output_name, index=False)
 
 
 if __name__ == '__main__':
