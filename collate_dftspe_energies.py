@@ -15,18 +15,18 @@ import sys
 import glob
 
 
-def get_energy(output_file, directory):
+def get_energy(output_file, directory, method):
 
     with open(f'{directory}/{output_file}', 'r') as f:
-        data = f.read()
-
-    energy = data.split('SCF Done:  E(RPBE1PBE) =')
-    energy = energy[-1].split('A.U. after')[0]
-    # try:
-    return float(energy)  # a.u.
-    # except ValueError:
-    #     energy = energy.split(back_splitter2)[0]
-    #     return float(energy)  # a.u.
+        for line in f.readlines():
+            if 'A.U. after' in line:
+                l = line.rstrip()
+                if method == 'pbe':
+                    energy = l.split('SCF Done:  E(RPBE1PBE) =')
+                elif method == 'mp2':
+                    energy = l.split('SCF Done:  E(RHF) =')
+                energy = energy[-1].split('A.U. after')[0]
+                return float(energy)  # a.u.
 
 
 def main():
@@ -46,14 +46,22 @@ def main():
         # r'SCRF=(PCM,Solvent=DiMethylSulfoxide)'
     }
 
-    all_energies = {}
-    for solv in _solvents:
-        for s in structures:
-            name = s.replace('.mol', f'_{solv}')
-            output_file = s.replace('.mol', f'_{solv}.log')
+    _methods = {
+        'pbe': ('PBE1PBE', 'Def2TZVP', 'EmpiricalDispersion=GD3'),
+        'mp2': ('MP2', 'aug-cc-pVDZ', None),
+    }
 
-            energy = get_energy(output_file, directory)
-            all_energies[name] = energy
+    all_energies = {}
+    for meth in _methods:
+        for solv in _solvents:
+            for s in structures:
+                name = s.replace('.mol', f'_{solv}_{meth}')
+                output_file = (
+                    s.replace('.mol', f'_{solv}_{meth}.log')
+                )
+
+                energy = get_energy(output_file, directory, meth)
+                all_energies[name] = energy
 
     with open(output_ey_file, 'w') as f:
         f.write('name,energy\n')
