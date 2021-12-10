@@ -9,10 +9,29 @@ Build and optimise cage intermediates
     * structure_preparation.py
         * Runs opls3e conformer search and optimisation -> '{name}_ff.mol', '{name}_md.mol'
         * Then runs xTB optimisation -> '{name}_opt.{mol, ey}' [multiple ey files for multiple solvents]
+
+    * write_gaussian_input.py
+        * writes into xtb_spe_DFT/
+        * writes input files for single point energy calculations
+    * RUN single-point energy calculations through Gaussian
+
+    * ORCA INPUT FOES HERE
+
+    * Collate all energies from all calculation sets using collate_energies.py
+        * One command-line argument: output_ey_file: .csv file to save all energies too
+        * edit this script to add new methods
+
     * calculate_formation_energies.py
-        * produces XX.csv with formation energies of all species
-    * plot_formation_energies.py
-        * produces plots:
+        * produces two csv files with formation energies of all species for all methods.
+        * arguments:
+            * ey_file : all_total_energies.csv (from above)
+            * formation_energy_file : file to output all formation energies too
+            * per_imine_file : file to output all formation energies per imine bonds formed too
+
+    * plot_formation_energies.py fe_csv_file fe_pi_csv_file
+        * fe_csv_file: file containing formation energies to plot
+        * fe_pi_csv_file: file containing formation energies per imine to plot
+        * produces plots in figures/ directory:
             * fe_perimine.pdf
             * fe_total.pdf
             * fe_perimine_ami{i}.pdf
