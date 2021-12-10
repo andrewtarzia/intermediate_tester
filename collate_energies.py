@@ -70,7 +70,7 @@ def main():
         output_ey_file = sys.argv[1]
 
     structures = sorted(glob.glob('*_opt.mol'))
-    print(structures)
+    print(f'there are {len(structures)} structures')
     structure_titles = [i.replace('_opt.mol', '') for i in structures]
 
     _energy_methods = {
