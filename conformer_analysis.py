@@ -591,7 +591,27 @@ def density_of_all_amines(results, filename, ignore_b):
         )
         plt.close()
 
-        fig, ax = plt.subplots(4, 1, sharex=True, figsize=(8, 7))
+
+def manuscript_density_of_all_amines(results, filename):
+
+    # For each property.
+    result_keys = result_key_defn()
+    for rkey in result_keys:
+        rkeyinfo = result_keys[rkey]
+        if rkey == 'NN_dis':
+            # bottoms = [12, 8, 4, 0]
+            density = True
+            ylab = 'frequency'
+            # ylim = 24
+        elif rkey == 'NCCN_dihed':
+            # bottoms = [0.6, 0.5, 0.15, 0]
+            density = True
+            ylab = 'frequency'
+            # ylim = 0.7
+        else:
+            continue
+
+        fig, ax = plt.subplots(4, 1, sharex=True, figsize=(8, 5))
         # Remove horizontal space between axes
         fig.subplots_adjust(hspace=0)
 
@@ -666,8 +686,8 @@ def density_of_all_amines(results, filename, ignore_b):
                 facecolor=leg_info()[ami]['c'],
                 alpha=1.0,
                 # color=leg_info()[ami]['c'],
-                color='white',
-                edgecolor='white',
+                # color='white',
+                edgecolor='k',
                 label=leg_info()[ami]['label'],
             )
             ax[i].set_yticks([])
@@ -954,11 +974,17 @@ def main():
     density_of_all_amines(
         etkdg_results,
         filename='topetkdg_',
+        ignore_b=False,
+    )
+    manuscript_density_of_all_amines(
+        etkdg_results,
+        filename='manu_etkdg_',
     )
     if opls3e_results is not None:
         density_of_all_amines(
             opls3e_results,
             filename='topopls3e',
+            ignore_b=True,
         )
         compare_etkdg_opls(etkdg_results, opls3e_results)
 
