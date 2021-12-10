@@ -253,180 +253,225 @@ def main():
         sys.exit()
     else:
         fe_csv = sys.argv[1]
-        output_prefix = sys.argv[2]
+        fe_pi_csv = sys.argv[2]
 
     figures_directory = 'figures'
     if not os.path.exists(figures_directory):
         os.mkdir(figures_directory)
 
     fe_data = pd.read_csv(fe_csv)
+    fe_pi_data = pd.read_csv(fe_pi_csv)
+
+    _energy_methods = {
+        'xtbgas': {
+            'solvent': 'gas',
+            'method': 'xtb'
+        },
+        'xtbchcl3': {
+            'solvent': 'chcl3',
+            'method': 'xtb'
+        },
+        'ds_pbe_gas': {
+            'solvent': 'gas',
+            'method': 'pbe'
+        },
+        'ds_pbe_dcm': {
+            'solvent': 'dcm',
+            'method': 'pbe'
+        },
+        'ds_pbe_cfm': {
+            'solvent': 'cfm',
+            'method': 'pbe'
+        },
+        'ds_mp2_gas': {
+            'solvent': 'gas',
+            'method': 'mp2'
+        },
+        'ds_mp2_dcm': {
+            'solvent': 'dcm',
+            'method': 'mp2'
+        },
+        'ds_mp2_cfm': {
+            'solvent': 'cfm',
+            'method': 'mp2'
+        },
+        'ds_O_b97_gas': {
+            'solvent': 'gas',
+            'method': 'B97-3c'
+        },
+        'ds_O_mp2_gas': {
+            'solvent': 'gas',
+            'method': 'MP2'
+        },
+    }
+
+    # Get plot properties.
     xpos = interplot_xpos()
     leg_info = interplot_leg()
     same_sizers = interplot_ss()
+
     lscp = landscape()
-    X_values = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
-    Y_values = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
-    names = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
-    Y_values_pI = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
-    X_values_noaminal = {
-        'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []
-    }
-    Y_values_noaminal = {
-        'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []
-    }
-    Y_values_pI_noaminal = {
-        'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []
-    }
-    names_noaminal = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
 
-    fe_data = fe_data.dropna()
+    for method in _energy_methods:
+        output_prefix = method
+        names = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+        X_v = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+        Y_v = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+        Y_v_pI = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+        names_noam = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+        X_v_noam = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+        Y_v_noam = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
+        Y_v_pI_noam = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
 
-    for inter in lscp:
-        iname = inter['intname']
-        if iname not in list(fe_data['intname']):
-            continue
-        spec_df = fe_data[fe_data['intname'] == iname]
-        FE = float(spec_df['formenergy_au']) * 2625.5
-        FE_pI = float(spec_df['formenergypermine_au']) * 2625.5
-        X_values[inter['ami']].append(xpos[inter['size']])
-        Y_values[inter['ami']].append(FE)
-        Y_values_pI[inter['ami']].append(FE_pI)
-        names[inter['ami']].append(inter['long-name'])
-        if inter['long-name'].split('_')[-1] != '1':
-            X_values_noaminal[inter['ami']].append(
-                xpos[inter['size']]
+        for intermediate in lscp:
+            iname = intermediate['intname']
+            spec_fe_df = fe_data[fe_data['name'] == iname]
+            FE = float(spec_fe_df[method].iloc[0]) * 2625.5
+            spec_fe_pi_df = fe_pi_data[fe_pi_data['name'] == iname]
+            FE_pI = float(spec_fe_pi_df[method].iloc[0]) * 2625.5
+            X_v[intermediate['ami']].append(xpos[intermediate['size']])
+            Y_v[intermediate['ami']].append(FE)
+            Y_v_pI[intermediate['ami']].append(FE_pI)
+            names[intermediate['ami']].append(
+                intermediate['long-name']
             )
-            Y_values_noaminal[inter['ami']].append(FE)
-            Y_values_pI_noaminal[inter['ami']].append(FE_pI)
-            names_noaminal[inter['ami']].append(inter['long-name'])
+            if intermediate['long-name'].split('_')[-1] != '1':
+                X_v_noam[intermediate['ami']].append(
+                    xpos[intermediate['size']]
+                )
+                Y_v_noam[intermediate['ami']].append(FE)
+                Y_v_pI_noam[intermediate['ami']].append(FE_pI)
+                names_noam[intermediate['ami']].append(
+                    intermediate['long-name']
+                )
 
-    plot_FE(
-        X=X_values,
-        Y=Y_values,
-        leg_info=leg_info,
-        names=names,
-        same_sizers=same_sizers,
-        ylbl='energy of formation [kJmol$^{-1}$]',
-        # ylbl='free energy of formation [kJmol$^{-1}$]',
-        X_pos=xpos,
-        title=f'{figures_directory}/{output_prefix}_fe_total.pdf',
-        ylim=(-10, 700),
-        amine=None
-    )
-    plot_FE(
-        X=X_values,
-        Y=Y_values_pI,
-        leg_info=leg_info,
-        names=names,
-        same_sizers=same_sizers,
-        ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
-        X_pos=xpos,
-        title=f'{figures_directory}/{output_prefix}_fe_perimine.pdf',
-        ylim=(-10, 110),
-        amine=None
-    )
-    manu_plot_FE(
-        X=X_values,
-        Y=Y_values_pI,
-        leg_info=leg_info,
-        names=names,
-        ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
-        # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
-        X_pos=xpos,
-        title=(
-            f'{figures_directory}/manu_{output_prefix}_fe_perimine.pdf'
-        ),
-        ylim=(0, 45),
-        amine=None
-    )
-
-    for ami in X_values:
         plot_FE(
-            X=X_values,
-            Y=Y_values,
+            X=X_v,
+            Y=Y_v,
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
             ylbl='energy of formation [kJmol$^{-1}$]',
             # ylbl='free energy of formation [kJmol$^{-1}$]',
             X_pos=xpos,
-            title=(
-                f'{figures_directory}/{output_prefix}_fe_total_{ami}'
-                '.pdf'
-            ),
+            title=f'{figures_directory}/{output_prefix}_fe_total.pdf',
             ylim=(-10, 700),
-            amine=ami,
+            amine=None
         )
         plot_FE(
-            X=X_values,
-            Y=Y_values_pI,
+            X=X_v,
+            Y=Y_v_pI,
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
             ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
-            # ylbl=(
-            #   'free energy of formation\nper imine bond '
-            #   '[kJmol$^{-1}$]'
-            # ),
             X_pos=xpos,
-            title=(
-                f'{figures_directory}/{output_prefix}_fe_perimine_'
-                f'{ami}.pdf'
-            ),
+            title=f'{figures_directory}/{output_prefix}_fe_perimine.pdf',
             ylim=(-10, 110),
-            amine=ami
+            amine=None
         )
-        manu_plot_FE_withaminal(
-            X=X_values,
-            Y=Y_values_pI,
+        manu_plot_FE(
+            X=X_v,
+            Y=Y_v_pI,
             leg_info=leg_info,
             names=names,
-            same_sizers=same_sizers,
-            ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
-            # ylbl=(
-            #   'free energy of formation\nper imine bond '
-            #   '[kJmol$^{-1}$]'
-            # ),
-            X_pos=xpos,
-            title=(
-                f'{figures_directory}/manu_{output_prefix}_fe_'
-                f'perimine_{ami}.pdf'
-            ),
-            ylim=(0, 45),
-            amine=ami
-        )
-        plot_FE(
-            X=X_values_noaminal,
-            Y=Y_values_noaminal,
-            leg_info=leg_info,
-            names=names_noaminal,
-            same_sizers=same_sizers,
-            ylbl='energy of formation [kJmol$^{-1}$]',
-            # ylbl='free energy of formation [kJmol$^{-1}$]',
-            X_pos=xpos,
-            title=(
-                f'{figures_directory}/{output_prefix}_fe_total_{ami}_'
-                'noaminal.pdf'
-            ),
-            ylim=(-10, 700),
-            amine=ami
-        )
-        plot_FE(
-            X=X_values_noaminal,
-            Y=Y_values_pI_noaminal,
-            leg_info=leg_info,
-            names=names_noaminal,
-            same_sizers=same_sizers,
             ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
             # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
             X_pos=xpos,
             title=(
-                f'{figures_directory}/{output_prefix}_fe_perimine_'
-                f'{ami}_noaminal.pdf'
+                f'{figures_directory}/manu_{output_prefix}_fe_perimine.pdf'
             ),
-            ylim=(-10, 110),
-            amine=ami
+            ylim=(0, 45),
+            amine=None
         )
+
+        for ami in X_v:
+            plot_FE(
+                X=X_v,
+                Y=Y_v,
+                leg_info=leg_info,
+                names=names,
+                same_sizers=same_sizers,
+                ylbl='energy of formation [kJmol$^{-1}$]',
+                # ylbl='free energy of formation [kJmol$^{-1}$]',
+                X_pos=xpos,
+                title=(
+                    f'{figures_directory}/{output_prefix}_fe_total_{ami}'
+                    '.pdf'
+                ),
+                ylim=(-10, 700),
+                amine=ami,
+            )
+            plot_FE(
+                X=X_v,
+                Y=Y_v_pI,
+                leg_info=leg_info,
+                names=names,
+                same_sizers=same_sizers,
+                ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+                # ylbl=(
+                #   'free energy of formation\nper imine bond '
+                #   '[kJmol$^{-1}$]'
+                # ),
+                X_pos=xpos,
+                title=(
+                    f'{figures_directory}/{output_prefix}_fe_perimine_'
+                    f'{ami}.pdf'
+                ),
+                ylim=(-10, 110),
+                amine=ami
+            )
+            manu_plot_FE_withaminal(
+                X=X_v,
+                Y=Y_v_pI,
+                leg_info=leg_info,
+                names=names,
+                same_sizers=same_sizers,
+                ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+                # ylbl=(
+                #   'free energy of formation\nper imine bond '
+                #   '[kJmol$^{-1}$]'
+                # ),
+                X_pos=xpos,
+                title=(
+                    f'{figures_directory}/manu_{output_prefix}_fe_'
+                    f'perimine_{ami}.pdf'
+                ),
+                ylim=(0, 45),
+                amine=ami
+            )
+            plot_FE(
+                X=X_v_noam,
+                Y=Y_v_noam,
+                leg_info=leg_info,
+                names=names_noam,
+                same_sizers=same_sizers,
+                ylbl='energy of formation [kJmol$^{-1}$]',
+                # ylbl='free energy of formation [kJmol$^{-1}$]',
+                X_pos=xpos,
+                title=(
+                    f'{figures_directory}/{output_prefix}_fe_total_{ami}_'
+                    'noaminal.pdf'
+                ),
+                ylim=(-10, 700),
+                amine=ami
+            )
+            plot_FE(
+                X=X_v_noam,
+                Y=Y_v_pI_noam,
+                leg_info=leg_info,
+                names=names_noam,
+                same_sizers=same_sizers,
+                ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+                # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
+                X_pos=xpos,
+                title=(
+                    f'{figures_directory}/{output_prefix}_fe_perimine_'
+                    f'{ami}_noaminal.pdf'
+                ),
+                ylim=(-10, 110),
+                amine=ami
+            )
 
 
 if __name__ == '__main__':
