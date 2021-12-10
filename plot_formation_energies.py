@@ -262,49 +262,10 @@ def main():
     fe_data = pd.read_csv(fe_csv)
     fe_pi_data = pd.read_csv(fe_pi_csv)
 
-    _energy_methods = {
-        'xtbgas': {
-            'solvent': 'gas',
-            'method': 'xtb'
-        },
-        'xtbchcl3': {
-            'solvent': 'chcl3',
-            'method': 'xtb'
-        },
-        'ds_pbe_gas': {
-            'solvent': 'gas',
-            'method': 'pbe'
-        },
-        'ds_pbe_dcm': {
-            'solvent': 'dcm',
-            'method': 'pbe'
-        },
-        'ds_pbe_cfm': {
-            'solvent': 'cfm',
-            'method': 'pbe'
-        },
-        'ds_mp2_gas': {
-            'solvent': 'gas',
-            'method': 'mp2'
-        },
-        'ds_mp2_dcm': {
-            'solvent': 'dcm',
-            'method': 'mp2'
-        },
-        'ds_mp2_cfm': {
-            'solvent': 'cfm',
-            'method': 'mp2'
-        },
-        'ds_O_b97_gas': {
-            'solvent': 'gas',
-            'method': 'B97-3c'
-        },
-        'ds_O_mp2_gas': {
-            'solvent': 'gas',
-            'method': 'MP2'
-        },
-    }
-
+    _energy_methods = set(
+        i for i in list(fe_data.columns)
+        if i != 'name'
+    )
     # Get plot properties.
     xpos = interplot_xpos()
     leg_info = interplot_leg()
