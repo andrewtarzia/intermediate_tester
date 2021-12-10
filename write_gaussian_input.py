@@ -34,7 +34,13 @@ def write_defn_section(
     solvent=None,
     method='PBE1PBE',
     org_basis=None,
+    dispersion_correction=None,
 ):
+
+    if dispersion_correction is None:
+        dispersion_correction_s = ''
+    else:
+        dispersion_correction_s = dispersion_correction
 
     if solvent is None:
         solvent_s = ''
@@ -48,7 +54,7 @@ def write_defn_section(
         f'{runtype} '
         'SCF=(YQC,MaxCycle=900) '
         'int=(Grid=Superfinegrid) '
-        'EmpiricalDispersion=GD3 '
+        f'{dispersion_correction_s} '
         f'{solvent_s}\n\n'
         f'{new_name}\n\n'
     )
@@ -98,6 +104,7 @@ def write_input_file(
     method,
     org_basis,
     solvent,
+    dispersion_correction,
 ):
     base_name = '_'+infile.replace('.in', '')
 
@@ -111,6 +118,7 @@ def write_input_file(
         method=method,
         solvent=solvent,
         org_basis=org_basis,
+        dispersion_correction=dispersion_correction,
     )
     string += write_molecule_section(struct, restart=False)
 
@@ -130,6 +138,11 @@ def main():
     structures = glob.glob('*_opt.mol')
     directory = 'xtb_spe_DFT'
 
+    _methods = {
+        'pbe': ('PBE1PBE', 'Def2TZVP', 'EmpiricalDispersion=GD3'),
+        'mp2': ('MP2', 'aug-cc-pVDZ', None),
+    }
+
     _solvents = {
         'gas': None,
         'dcm': r'SCRF=(PCM,Solvent=Dichloromethane)',
@@ -137,35 +150,39 @@ def main():
         # r'SCRF=(PCM,Solvent=DiMethylSulfoxide)'
     }
 
-    run_lines = []
-    for solv in _solvents:
-        for s in structures:
-            mol = stk.BuildingBlock.init_from_file(s)
-            gau_inp = s.replace('.mol', f'_{solv}.gau')
+    for meth in _methods:
+        run_lines = []
+        for solv in _solvents:
+            for s in structures:
+                mol = stk.BuildingBlock.init_from_file(s)
+                gau_inp = s.replace('.mol', f'_{solv}_{meth}.gau')
 
-            write_input_file(
-                infile=gau_inp,
-                struct=mol,
-                np=num_proc,
-                directory=directory,
-                method='PBE1PBE',
-                runtype='SP',
-                org_basis='Def2TZVP',
-                solvent=_solvents[solv],
-            )
-            run_line = (
-                f"g16 < {gau_inp} > "
-                f"{gau_inp.replace('.gau', '.log')}\n"
-            )
-            run_lines.append(run_line)
+                write_input_file(
+                    infile=gau_inp,
+                    struct=mol,
+                    np=num_proc,
+                    directory=directory,
+                    method=_methods[meth][0],
+                    runtype='SP',
+                    org_basis=_methods[meth][1],
+                    solvent=_solvents[solv],
+                    dispersion_correction=_methods[meth][2],
+                )
+                run_line = (
+                    f"g16 < {gau_inp} > "
+                    f"{gau_inp.replace('.gau', '.log')}\n"
+                )
+                run_lines.append(run_line)
 
-    # To add to a multiple run .sh file.
-    for i, rls in enumerate(chunks(run_lines, 20)):
-        with open(f'{directory}/spes_{i}.sh', 'w') as f:
-            f.write(run_file_top_line(name=f's_{i}', np=num_proc))
-            f.write('\n')
-            for rl in rls:
-                f.write(rl)
+        # To add to a multiple run .sh file.
+        for i, rls in enumerate(chunks(run_lines, 20)):
+            with open(f'{directory}/spes_{meth}_{i}.sh', 'w') as f:
+                f.write(
+                    run_file_top_line(name=f's_{i}', np=num_proc)
+                )
+                f.write('\n')
+                for rl in rls:
+                    f.write(rl)
 
 
 if __name__ == '__main__':
