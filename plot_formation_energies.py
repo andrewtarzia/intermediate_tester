@@ -14,6 +14,7 @@ Date Created: 30 Mar 2021
 import pandas as pd
 import matplotlib.pyplot as plt
 import sys
+import os
 
 from reactions import landscape
 from utilities import (
@@ -254,8 +255,11 @@ def main():
         fe_csv = sys.argv[1]
         output_prefix = sys.argv[2]
 
+    figures_directory = 'figures'
+    if not os.path.exists(figures_directory):
+        os.mkdir(figures_directory)
+
     fe_data = pd.read_csv(fe_csv)
-    print(fe_data)
     xpos = interplot_xpos()
     leg_info = interplot_leg()
     same_sizers = interplot_ss()
@@ -282,12 +286,8 @@ def main():
         if iname not in list(fe_data['intname']):
             continue
         spec_df = fe_data[fe_data['intname'] == iname]
-        FE = float(
-            spec_df['formenergy_kjmol']
-        )
-        FE_pI = float(
-            spec_df['formenergypermine_kjmol']
-        )
+        FE = float(spec_df['formenergy_au']) * 2625.5
+        FE_pI = float(spec_df['formenergypermine_au']) * 2625.5
         X_values[inter['ami']].append(xpos[inter['size']])
         Y_values[inter['ami']].append(FE)
         Y_values_pI[inter['ami']].append(FE_pI)
@@ -309,7 +309,7 @@ def main():
         ylbl='energy of formation [kJmol$^{-1}$]',
         # ylbl='free energy of formation [kJmol$^{-1}$]',
         X_pos=xpos,
-        title=f'{output_prefix}_fe_total.pdf',
+        title=f'{figures_directory}/{output_prefix}_fe_total.pdf',
         ylim=(-10, 700),
         amine=None
     )
@@ -321,7 +321,7 @@ def main():
         same_sizers=same_sizers,
         ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
         X_pos=xpos,
-        title=f'{output_prefix}_fe_perimine.pdf',
+        title=f'{figures_directory}/{output_prefix}_fe_perimine.pdf',
         ylim=(-10, 110),
         amine=None
     )
@@ -333,7 +333,9 @@ def main():
         ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
         # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
         X_pos=xpos,
-        title=f'manu_{output_prefix}_fe_perimine.pdf',
+        title=(
+            f'{figures_directory}/manu_{output_prefix}_fe_perimine.pdf'
+        ),
         ylim=(0, 45),
         amine=None
     )
@@ -348,7 +350,10 @@ def main():
             ylbl='energy of formation [kJmol$^{-1}$]',
             # ylbl='free energy of formation [kJmol$^{-1}$]',
             X_pos=xpos,
-            title=f'{output_prefix}_fe_total_{ami}.pdf',
+            title=(
+                f'{figures_directory}/{output_prefix}_fe_total_{ami}'
+                '.pdf'
+            ),
             ylim=(-10, 700),
             amine=ami,
         )
@@ -364,7 +369,10 @@ def main():
             #   '[kJmol$^{-1}$]'
             # ),
             X_pos=xpos,
-            title=f'{output_prefix}_fe_perimine_{ami}.pdf',
+            title=(
+                f'{figures_directory}/{output_prefix}_fe_perimine_'
+                f'{ami}.pdf'
+            ),
             ylim=(-10, 110),
             amine=ami
         )
@@ -380,7 +388,10 @@ def main():
             #   '[kJmol$^{-1}$]'
             # ),
             X_pos=xpos,
-            title=f'manu_{output_prefix}_fe_perimine_{ami}.pdf',
+            title=(
+                f'{figures_directory}/manu_{output_prefix}_fe_'
+                f'perimine_{ami}.pdf'
+            ),
             ylim=(0, 45),
             amine=ami
         )
@@ -393,7 +404,10 @@ def main():
             ylbl='energy of formation [kJmol$^{-1}$]',
             # ylbl='free energy of formation [kJmol$^{-1}$]',
             X_pos=xpos,
-            title=f'{output_prefix}_fe_total_{ami}_noaminal.pdf',
+            title=(
+                f'{figures_directory}/{output_prefix}_fe_total_{ami}_'
+                'noaminal.pdf'
+            ),
             ylim=(-10, 700),
             amine=ami
         )
@@ -406,7 +420,10 @@ def main():
             ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
             # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
             X_pos=xpos,
-            title=f'{output_prefix}_fe_perimine_{ami}_noaminal.pdf',
+            title=(
+                f'{figures_directory}/{output_prefix}_fe_perimine_'
+                f'{ami}_noaminal.pdf'
+            ),
             ylim=(-10, 110),
             amine=ami
         )
