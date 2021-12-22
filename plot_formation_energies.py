@@ -384,6 +384,21 @@ def main():
             )
             manu_plot_FE_withaminal(
                 X=X_v,
+                Y=Y_v,
+                leg_info=leg_info,
+                names=names,
+                same_sizers=same_sizers,
+                ylbl='energy of formation [kJmol$^{-1}$]',
+                X_pos=xpos,
+                title=(
+                    f'{figures_directory}/manu_{output_prefix}_fe_'
+                    f'total_{ami}.pdf'
+                ),
+                ylim=(-10, 700),
+                amine=ami
+            )
+            manu_plot_FE_withaminal(
+                X=X_v,
                 Y=Y_v_pI,
                 leg_info=leg_info,
                 names=names,
