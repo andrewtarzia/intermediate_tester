@@ -69,11 +69,12 @@ def write_mp2_file(prefix, np, directory):
     multi = 1
 
     string = (
-        '! RI-MP2 RIJCOSX cc-pVTZ cc-pVTZ/C def2/J TIGHTSCF\n\n'
+        '! RI-MP2 RIJCOSX aug-cc-pVDZ aug-cc-pVDZ/C def2/J '
+        'TIGHTSCF\n\n'
         f'%base "{basename}"\n'
         '%maxcore 3000\n'
         f'%pal\n   nprocs {np}\nend\n\n'
-        f'# * xyzfile {charge} {multi} _o_{prefix}_B97-3c.xyz\n'
+        f'* xyzfile {charge} {multi} _o_{prefix}_B97-3c.xyz\n'
     )
 
     with open(f'{directory}/{infile}', 'w') as f:
