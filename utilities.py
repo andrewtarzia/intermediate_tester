@@ -44,16 +44,16 @@ def read_ey(file):
 def interplot_xpos():
     distt = 5
     return {
-        '[1+1]': distt*1,
-        '[1+2]': distt*2,
-        '[1+3]': distt*3,
-        '[2+2]': distt*4,
-        '[2+3]': distt*5,
-        '[2+4]': distt*6,
-        '[3+4]': distt*7,
-        '[3+5]': distt*8,
-        '[3+6]': distt*9,
-        '[4+6]': distt*10
+        # '[1+1]': distt*1,
+        '[1+2]': distt*1,
+        '[1+3]': distt*2,
+        # '[2+2]': distt*4,
+        '[2+3]': distt*3,
+        '[2+4]': distt*4,
+        '[3+4]': distt*5,
+        '[3+5]': distt*6,
+        '[3+6]': distt*7,
+        '[4+6]': distt*8,
     }
 
 
