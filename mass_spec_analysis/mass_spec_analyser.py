@@ -125,7 +125,7 @@ def main():
         },
     }
 
-    height = 0.01
+    height = 0.001
     for dir in dirs:
         print(dir)
         full_files = [dir+'/'+i for i in dirs[dir]['files']]

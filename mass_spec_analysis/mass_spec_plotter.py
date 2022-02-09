@@ -13,6 +13,7 @@ Date Created: 09 Feb 2022
 
 import matplotlib.pyplot as plt
 import glob
+import numpy as np
 
 
 def main():
@@ -49,34 +50,6 @@ def main():
         'Week6': '#feb000',
     }
 
-    fig, ax = plt.subplots(figsize=(8, 5))
-    for i, sys in enumerate(systems):
-        y_base = y_pos[i]
-        print(y_base)
-        sfiles = system_data[sys]
-        print(sfiles)
-        for j, fi in enumerate(sfiles):
-            print(fi)
-            week = fi.replace('.txt', '').replace('peaks', '')
-            week = week.replace(f'_{systems[sys]}_', '')
-            _inc = _incs[week]
-            print(week, _inc)
-            with open(fi, 'r') as f:
-                lines = f.readlines()
-
-            for li in lines:
-                x = float(li.rstrip())
-                print(li, x)
-                xtoplot = [x, x]
-                ytoplot = [y_base+_inc, y_base+_inc+0.16]
-                ax.plot(
-                    xtoplot,
-                    ytoplot,
-                    label=fi,
-                    lw=2,
-                    c=_cs[week],
-                )
-
     peaks_picked = {
         # 305.2772,
         # 349.3114,
@@ -101,6 +74,42 @@ def main():
         '3+6': 1189,
         '4+6': 1297,
     }
+    _peak_positions = [peaks_picked[p] for p in peaks_picked]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for i, sys in enumerate(systems):
+        y_base = y_pos[i]
+        print(y_base)
+        sfiles = system_data[sys]
+        print(sfiles)
+        for j, fi in enumerate(sfiles):
+            print(fi)
+            week = fi.replace('.txt', '').replace('peaks', '')
+            week = week.replace(f'_{systems[sys]}_', '')
+            _inc = _incs[week]
+            print(week, _inc)
+            with open(fi, 'r') as f:
+                lines = f.readlines()
+
+            for li in lines:
+                x = float(li.rstrip())
+                print(li, x)
+                if not np.any(np.isclose(
+                    np.array(x), _peak_positions,
+                    atol=2E0,
+                )):
+                    continue
+                xtoplot = [x, x]
+                ytoplot = [y_base+_inc, y_base+_inc+0.16]
+                ax.plot(
+                    xtoplot,
+                    ytoplot,
+                    label=fi,
+                    lw=2,
+                    c=_cs[week],
+                    # alpha=0.2,
+                )
+
     for p in peaks_picked:
         x = peaks_picked[p]
         ax.axvline(x=x, lw=2, linestyle='--')
@@ -113,9 +122,9 @@ def main():
     ax.set_ylim(None, None)
 
     for y in y_pos:
-        ax.axhline(y=y, c='k')
+        ax.axhline(y=y, c='k', lw=2,)
         for i in _incs:
-            ax.axhline(y=y+_incs[i], c='k', alpha=0.2)
+            ax.axhline(y=y+_incs[i], c='k', lw=2, alpha=0.2)
 
     fig.tight_layout()
     fig.savefig(
