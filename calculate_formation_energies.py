@@ -40,7 +40,10 @@ def main():
     print(all_structure_energies)
 
     _energy_methods = set(
-        list(all_structure_energies.columns)
+        [
+            i for i in list(all_structure_energies.columns)
+            if i != 'name'
+        ]
     )
     print(_energy_methods)
     # Get the landscape of intermediates.

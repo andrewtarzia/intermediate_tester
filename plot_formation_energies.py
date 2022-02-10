@@ -94,7 +94,7 @@ def plot_FE(
     ax.axhline(y=0, c='k', alpha=0.2, lw=2)
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.set_xlabel('cluster size', fontsize=16)
-    ax.set_xlim(0, 55)
+    ax.set_xlim(0, 45)
     ax.set_ylim(ylim)
     ax.set_ylabel(ylbl, fontsize=16)
     ax.set_xticks(list(X_pos.values()))
@@ -104,7 +104,7 @@ def plot_FE(
     plt.close()
 
 
-def manu_plot_FE(
+def manu_fig2a(
     X,
     Y,
     leg_info,
@@ -155,7 +155,7 @@ def manu_plot_FE(
     ax.axhline(y=0, c='k', alpha=0.2, lw=2)
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.set_xlabel('intermediate size', fontsize=16)
-    ax.set_xlim(0, 55)
+    ax.set_xlim(0, 45)
     ax.set_ylim(ylim)
     ax.set_ylabel(ylbl, fontsize=16)
     ax.set_xticks(list(X_pos.values()))
@@ -165,7 +165,7 @@ def manu_plot_FE(
     plt.close()
 
 
-def manu_plot_FE_withaminal(
+def manu_fig2b_plot_FE_withaminal(
     X,
     Y,
     leg_info,
@@ -237,7 +237,7 @@ def manu_plot_FE_withaminal(
     ax.legend(fontsize=16)
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.set_xlabel('cluster size', fontsize=16)
-    ax.set_xlim(0, 55)
+    ax.set_xlim(0, 45)
     ax.set_ylim(ylim)
     ax.set_ylabel(ylbl, fontsize=16)
     ax.set_xticks(list(X_pos.values()))
@@ -312,7 +312,7 @@ def main():
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
-            ylbl='energy of formation [kJmol$^{-1}$]',
+            ylbl='formation energy [kJmol$^{-1}$]',
             # ylbl='free energy of formation [kJmol$^{-1}$]',
             X_pos=xpos,
             title=f'{figures_directory}/{output_prefix}_fe_total.pdf',
@@ -325,24 +325,23 @@ def main():
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
-            ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+            ylbl='formation energy\nper imine [kJmol$^{-1}$]',
             X_pos=xpos,
             title=f'{figures_directory}/{output_prefix}_fe_perimine.pdf',
             ylim=(-10, 110),
             amine=None
         )
-        manu_plot_FE(
+        manu_fig2a(
             X=X_v,
-            Y=Y_v_pI,
+            Y=Y_v,
             leg_info=leg_info,
             names=names,
-            ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
-            # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
+            ylbl='formation energy [kJmol$^{-1}$]',
             X_pos=xpos,
             title=(
-                f'{figures_directory}/manu_{output_prefix}_fe_perimine.pdf'
+                f'{figures_directory}/fig2a_{output_prefix}_fe_total.pdf'
             ),
-            ylim=(0, 45),
+            ylim=(0, None),
             amine=None
         )
 
@@ -353,7 +352,7 @@ def main():
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='energy of formation [kJmol$^{-1}$]',
+                ylbl='formation energy [kJmol$^{-1}$]',
                 # ylbl='free energy of formation [kJmol$^{-1}$]',
                 X_pos=xpos,
                 title=(
@@ -369,7 +368,7 @@ def main():
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+                ylbl='formation energy\nper imine [kJmol$^{-1}$]',
                 # ylbl=(
                 #   'free energy of formation\nper imine bond '
                 #   '[kJmol$^{-1}$]'
@@ -382,28 +381,28 @@ def main():
                 ylim=(-10, 110),
                 amine=ami
             )
-            manu_plot_FE_withaminal(
+            manu_fig2b_plot_FE_withaminal(
                 X=X_v,
                 Y=Y_v,
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='energy of formation [kJmol$^{-1}$]',
+                ylbl='formation energy [kJmol$^{-1}$]',
                 X_pos=xpos,
                 title=(
-                    f'{figures_directory}/manu_{output_prefix}_fe_'
-                    f'total_{ami}.pdf'
+                    f'{figures_directory}/manu_fig2b{output_prefix}'
+                    f'_fe_total_{ami}.pdf'
                 ),
-                ylim=(-10, 700),
+                ylim=(-10, None),
                 amine=ami
             )
-            manu_plot_FE_withaminal(
+            manu_fig2b_plot_FE_withaminal(
                 X=X_v,
                 Y=Y_v_pI,
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+                ylbl='formation energy\nper imine [kJmol$^{-1}$]',
                 # ylbl=(
                 #   'free energy of formation\nper imine bond '
                 #   '[kJmol$^{-1}$]'
@@ -422,7 +421,7 @@ def main():
                 leg_info=leg_info,
                 names=names_noam,
                 same_sizers=same_sizers,
-                ylbl='energy of formation [kJmol$^{-1}$]',
+                ylbl='formation energy [kJmol$^{-1}$]',
                 # ylbl='free energy of formation [kJmol$^{-1}$]',
                 X_pos=xpos,
                 title=(
@@ -438,7 +437,7 @@ def main():
                 leg_info=leg_info,
                 names=names_noam,
                 same_sizers=same_sizers,
-                ylbl='energy of formation\nper imine bond [kJmol$^{-1}$]',
+                ylbl='formation energy\nper imine [kJmol$^{-1}$]',
                 # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
                 X_pos=xpos,
                 title=(
