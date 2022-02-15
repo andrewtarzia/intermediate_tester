@@ -312,8 +312,8 @@ def main():
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
-            ylbl='formation energy [kJmol$^{-1}$]',
-            # ylbl='free energy of formation [kJmol$^{-1}$]',
+            ylbl='formation energy [kJ mol$^{-1}$]',
+            # ylbl='free energy of formation [kJ mol$^{-1}$]',
             X_pos=xpos,
             title=f'{figures_directory}/{output_prefix}_fe_total.pdf',
             ylim=(-10, 700),
@@ -325,7 +325,7 @@ def main():
             leg_info=leg_info,
             names=names,
             same_sizers=same_sizers,
-            ylbl='formation energy\nper imine [kJmol$^{-1}$]',
+            ylbl='formation energy\nper imine [kJ mol$^{-1}$]',
             X_pos=xpos,
             title=f'{figures_directory}/{output_prefix}_fe_perimine.pdf',
             ylim=(-10, 110),
@@ -336,7 +336,7 @@ def main():
             Y=Y_v,
             leg_info=leg_info,
             names=names,
-            ylbl='formation energy [kJmol$^{-1}$]',
+            ylbl='formation energy [kJ mol$^{-1}$]',
             X_pos=xpos,
             title=(
                 f'{figures_directory}/fig2a_{output_prefix}_fe_total.pdf'
@@ -352,8 +352,8 @@ def main():
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='formation energy [kJmol$^{-1}$]',
-                # ylbl='free energy of formation [kJmol$^{-1}$]',
+                ylbl='formation energy [kJ mol$^{-1}$]',
+                # ylbl='free energy of formation [kJ mol$^{-1}$]',
                 X_pos=xpos,
                 title=(
                     f'{figures_directory}/{output_prefix}_fe_total_{ami}'
@@ -368,10 +368,10 @@ def main():
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='formation energy\nper imine [kJmol$^{-1}$]',
+                ylbl='formation energy\nper imine [kJ mol$^{-1}$]',
                 # ylbl=(
                 #   'free energy of formation\nper imine bond '
-                #   '[kJmol$^{-1}$]'
+                #   '[kJ mol$^{-1}$]'
                 # ),
                 X_pos=xpos,
                 title=(
@@ -387,7 +387,7 @@ def main():
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='formation energy [kJmol$^{-1}$]',
+                ylbl='formation energy [kJ mol$^{-1}$]',
                 X_pos=xpos,
                 title=(
                     f'{figures_directory}/manu_fig2b{output_prefix}'
@@ -402,10 +402,10 @@ def main():
                 leg_info=leg_info,
                 names=names,
                 same_sizers=same_sizers,
-                ylbl='formation energy\nper imine [kJmol$^{-1}$]',
+                ylbl='formation energy\nper imine [kJ mol$^{-1}$]',
                 # ylbl=(
                 #   'free energy of formation\nper imine bond '
-                #   '[kJmol$^{-1}$]'
+                #   '[kJ mol$^{-1}$]'
                 # ),
                 X_pos=xpos,
                 title=(
@@ -421,8 +421,8 @@ def main():
                 leg_info=leg_info,
                 names=names_noam,
                 same_sizers=same_sizers,
-                ylbl='formation energy [kJmol$^{-1}$]',
-                # ylbl='free energy of formation [kJmol$^{-1}$]',
+                ylbl='formation energy [kJ mol$^{-1}$]',
+                # ylbl='free energy of formation [kJ mol$^{-1}$]',
                 X_pos=xpos,
                 title=(
                     f'{figures_directory}/{output_prefix}_fe_total_{ami}_'
@@ -437,8 +437,8 @@ def main():
                 leg_info=leg_info,
                 names=names_noam,
                 same_sizers=same_sizers,
-                ylbl='formation energy\nper imine [kJmol$^{-1}$]',
-                # ylbl='free energy of formation\nper imine bond [kJmol$^{-1}$]',
+                ylbl='formation energy\nper imine [kJ mol$^{-1}$]',
+                # ylbl='free energy of formation\nper imine bond [kJ mol$^{-1}$]',
                 X_pos=xpos,
                 title=(
                     f'{figures_directory}/{output_prefix}_fe_perimine_'
