@@ -14,6 +14,19 @@ def get_values(lines, file):
     return values
 
 
+def get_res_values(lines, file):
+    values = {}
+    line_of_int = lines[0]
+    nl = line_of_int.replace(file, '').replace('@  ', '').rstrip()
+    nl = [i for i in nl.split(' ') if i]
+    print(nl)
+    values['di'] = float(nl[0])
+    values['df'] = float(nl[1])
+    values['dif'] = float(nl[2])
+
+    return values
+
+
 def main():
 
     crystals = [
@@ -25,6 +38,19 @@ def main():
 
     results = {}
     for cryst in crystals:
+        resoutput = cryst.replace('.cif', '.res')
+        cmd = (
+            f'{zeo_path} -ha -res '
+            f'{resoutput} {cryst}'
+        )
+        if not os.path.exists(resoutput):
+            os.system(cmd)
+
+        with open(resoutput, 'r') as f:
+            lines = f.readlines()
+        values = get_res_values(lines, resoutput)
+        print(f'{cryst}: {values}')
+
         results[cryst] = {}
         for probe in probes:
             results[cryst][probe] = {}
@@ -42,7 +68,6 @@ def main():
                 values = get_values(lines, output)
                 results[cryst][probe][sampl] = values
 
-    print(results)
     for cryst in results:
         for probe in results[cryst]:
             for sampl in results[cryst][probe]:

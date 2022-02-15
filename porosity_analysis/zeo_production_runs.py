@@ -57,113 +57,100 @@ def main():
         'CC21-alpha_100K_publ.cif',
     ]
     zeo_path = '/home/atarzia/software/zeo++-0.3/network'
-    probes = [1.0, 1.2, 1.3, 1.4, 1.55, 1.6, 1.7, 1.82]
-    samplins = [50000]
+    probes = [1.0, 1.2, 1.3, 1.4, 1.5, 1.55, 1.6, 1.7, 1.82]
+    sampl = 50000
+    zsa_sampl = 10000
 
     results = {}
     for cryst in crystals:
         results[cryst] = {}
         for probe in probes:
             results[cryst][probe] = {}
-            for sampl in samplins:
-                output = cryst.replace('.cif', f'_{probe}_{sampl}.out')
-                cmd = (
-                    f'{zeo_path} -ha -sa {probe} {probe} {sampl} '
-                    f'{output} {cryst}'
-                )
-                if not os.path.exists(output):
-                    os.system(cmd)
+            output = cryst.replace('.cif', f'_{probe}_{sampl}.out')
+            cmd = (
+                f'{zeo_path} -ha -sa {probe} {probe} {sampl} '
+                f'{output} {cryst}'
+            )
+            if not os.path.exists(output):
+                os.system(cmd)
 
-                with open(output, 'r') as f:
-                    lines = f.readlines()
-                values = get_values(lines, output)
-                results[cryst][probe][sampl] = values
+            with open(output, 'r') as f:
+                lines = f.readlines()
+            values = get_values(lines, output)
+            results[cryst][probe][sampl] = values
 
-                # Do zsa.
-                output = cryst.replace(
-                    '.cif', f'_{probe}_{sampl}_zsa.out'
-                )
-                cmd = (
-                    f'{zeo_path} -ha -zsa {probe} {probe} {sampl} '
-                    f'{output} {cryst}'
-                )
-                if not os.path.exists(output):
-                    os.system(cmd)
-                    convert_zsa_to_xyz(output)
+            # Do zsa.
+            zsaoutput = cryst.replace(
+                '.cif', f'_{probe}_{zsa_sampl}.zsa'
+            )
+            cmd = (
+                f'{zeo_path} -ha -zsa {probe} {probe} {zsa_sampl} '
+                f'{zsaoutput} {cryst}'
+            )
+            if not os.path.exists(zsaoutput):
+                os.system(cmd)
+                convert_zsa_to_xyz(zsaoutput)
 
-    print(results)
-    for cryst in results:
-        for probe in results[cryst]:
-            for sampl in results[cryst][probe]:
-                da = results[cryst][probe][sampl]
-                asa = da['asa_m2g-1']
-                nasa = da['nasa_m2g-1']
-                print(
-                    f'{cryst}, {probe}, {sampl}: '
-                    f'ASA={asa}, NASA={nasa}'
-                )
 
     fig, ax = plt.subplots(figsize=(8, 5))
+    xs = []
+    acc = []
+    nacc = []
+    totals = []
+    for cryst in results:
+        for probe in results[cryst]:
+            da = results[cryst][probe][sampl]
+            asa = da['asa_m2g-1']
+            nasa = da['nasa_m2g-1']
+            print(
+                f'{cryst}, {probe}, {sampl}: '
+                f'ASA={asa}, NASA={nasa}'
+            )
+            xs.append(probe)
+            acc.append(asa)
+            nacc.append(nasa)
+            totals.append(asa+nasa)
 
-    markers = ['o', 'X', 'P', 'D', '<', '>']
-    for i, res in enumerate(results):
-        sres = results[res]
-        for probe in sres:
-            da = results[res][probe]
-            print(da)
-            nasas = [da[i]['nasa_m2g-1'] for i in da]
-            asas = [da[i]['asa_m2g-1'] for i in da]
-            print(nasas, asas)
-            if nasas[-1] != 0.0:
-                ax.scatter(
-                    [i for i in da],
-                    # [((sa-nasas[-1])/nasas[-1])*100 for sa in nasas],
-                    [sa for sa in nasas],
-                    c='k',
-                    marker=markers[i],
-                    label=f'{res}-{probe}-NASA',
-                    edgecolor='k',
-                    s=50,
-                )
-            else:
-                ax.scatter(
-                    [i for i in da],
-                    # [((sa-nasas[-1])) for sa in nasas],
-                    [sa for sa in nasas],
-                    c='k',
-                    marker=markers[i],
-                    label=f'{res}-{probe}-NASA',
-                    edgecolor='k',
-                    s=50,
-                )
-            if asas[-1] != 0.0:
-                ax.scatter(
-                    [i for i in da],
-                    # [((asa-asas[-1])/asas[-1])*100 for asa in asas],
-                    [sa for sa in asas],
-                    c='r',
-                    marker=markers[i],
-                    label=f'{res}-{probe}-ASA',
-                    edgecolor='k',
-                    s=50,
-                )
-            else:
-                ax.scatter(
-                    [i for i in da],
-                    # [((sa-asas[-1])) for sa in asas],
-                    [sa for sa in asas],
-                    c='r',
-                    marker=markers[i],
-                    label=f'{res}-{probe}-ASA',
-                    edgecolor='k',
-                    s=50,
-                )
-
+        ax.plot(
+            xs,
+            acc,
+            c='gold',
+            marker='o',
+            # edgecolor='k',
+            # s=120,
+            lw=3,
+            markersize=8,
+            label='access.'
+        )
+        ax.plot(
+            xs,
+            nacc,
+            c='skyblue',
+            marker='X',
+            # edgecolor='k',
+            # s=120,
+            lw=3,
+            markersize=8,
+            label='nonaccess.'
+        )
+        ax.plot(
+            xs,
+            totals,
+            c='k',
+            marker='P',
+            # edgecolor='k',
+            # s=120,
+            lw=3,
+            markersize=8,
+            label='total'
+        )
     ax.legend(fontsize=16)
 
     ax.tick_params(axis='both', which='major', labelsize=16)
-    ax.set_xlabel('sampling', fontsize=16)
-    ax.set_ylabel('SA [m2/g]', fontsize=16)
+    ax.set_xlabel('probe radius', fontsize=16)
+    ax.set_ylabel('surface area [m$^2$ g$^{-1}$]', fontsize=16)
+    ax.set_xlim(0.9, 1.9)
+    ax.set_ylim(-1, max(totals)+50)
 
     fig.tight_layout()
     fig.savefig('SA_vs_probe.pdf', dpi=720, bbox_inches='tight')
