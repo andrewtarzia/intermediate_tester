@@ -487,8 +487,8 @@ def density_of_all_amines(results, filename, ignore_b):
             # ylim = 0.7
         else:
             # bottoms = [0, 0, 0, 0]
-            density = False
-            ylab = 'count'
+            density = True
+            ylab = 'frequency'
             # ylim = None
 
         fig, ax = plt.subplots(8, 1, sharex=True, figsize=(8, 10))
