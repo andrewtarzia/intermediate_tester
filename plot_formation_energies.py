@@ -286,8 +286,6 @@ def main():
     lscp = landscape()
 
     for method in _energy_methods:
-        if method != 'ds_O_mp2_gas':
-            continue
         output_prefix = method
         names = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
         X_v = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
