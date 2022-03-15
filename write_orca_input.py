@@ -69,8 +69,8 @@ def write_mp2_file(prefix, np, directory):
     multi = 1
 
     string = (
-        '! RI-MP2 RIJCOSX aug-cc-pVDZ aug-cc-pVDZ/C def2/J '
-        'TIGHTSCF\n\n'
+        '! RI-MP2 cc-pVTZ cc-pVTZ/C '
+        'TIGHTSCF printbasis Grid6 NOFINALGRID SlowConv\n\n'
         f'%base "{basename}"\n'
         '%maxcore 3000\n'
         f'%pal\n   nprocs {np}\nend\n\n'
