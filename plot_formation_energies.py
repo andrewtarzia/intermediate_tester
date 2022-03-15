@@ -39,7 +39,7 @@ def plot_FE(
     for ami in X:
         count1 = 0
         count2 = 0
-        print(f'doing fe of {ami}')
+        print(f'doing plot_fe of {ami}')
         if amine is not None:
             if amine != ami:
                 continue
@@ -48,7 +48,6 @@ def plot_FE(
         for i in range(len(X[ami])):
             X_value = X[ami][i]
             Y_value = Y[ami][i] - min(Y[ami])
-            print(title, names[ami][i], X_value, Y_value)
             if names[ami][i][-1] == '2':
                 if count2 == 1:
                     flat_line(
@@ -119,7 +118,7 @@ def manu_fig2a(
     fig, ax = plt.subplots(figsize=(8, 5))
     for ami in X:
         count2 = 0
-        print(f'doing fe of {ami}')
+        print(f'doing manu_fig2a of {ami}')
         if amine is not None:
             if amine != ami:
                 continue
@@ -128,7 +127,6 @@ def manu_fig2a(
         for i in range(len(X[ami])):
             X_value = X[ami][i]
             Y_value = Y[ami][i] - min(Y[ami])
-            print(title, names[ami][i], X_value, Y_value)
             if names[ami][i][-1] == '2':
                 if count2 == 1:
                     flat_line(
@@ -165,6 +163,21 @@ def manu_fig2a(
     plt.close()
 
 
+def manu_si_table(
+    X,
+    Y,
+    names,
+):
+
+    print('======== for table ========')
+    for ami in X:
+        print(f'doing fe of {ami}')
+        for i in range(len(X[ami])):
+            X_value = X[ami][i]
+            Y_value = Y[ami][i] - min(Y[ami])
+            print(names[ami][i], X_value, Y_value)
+    print('===========================')
+
 def manu_fig2b_plot_FE_withaminal(
     X,
     Y,
@@ -182,7 +195,7 @@ def manu_fig2b_plot_FE_withaminal(
     for ami in X:
         count1 = 0
         count2 = 0
-        print(f'doing fe of {ami}')
+        print(f'doing manu_fig2b_waminal of {ami}')
         if amine is not None:
             if amine != ami:
                 continue
@@ -191,7 +204,6 @@ def manu_fig2b_plot_FE_withaminal(
         for i in range(len(X[ami])):
             X_value = X[ami][i]
             Y_value = Y[ami][i] - min(Y[ami])
-            print(title, names[ami][i], X_value, Y_value)
             if names[ami][i][-1] == '2':
                 if count2 == 1:
                     flat_line(
@@ -274,6 +286,8 @@ def main():
     lscp = landscape()
 
     for method in _energy_methods:
+        if method != 'ds_O_mp2_gas':
+            continue
         output_prefix = method
         names = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
         X_v = {'ami1': [], 'ami2': [], 'ami3': [], 'ami4': []}
@@ -344,6 +358,12 @@ def main():
             ylim=(0, None),
             amine=None
         )
+        if output_prefix == 'ds_O_mp2_gas':
+            manu_si_table(
+                X=X_v,
+                Y=Y_v,
+                names=names,
+            )
 
         for ami in X_v:
             plot_FE(
