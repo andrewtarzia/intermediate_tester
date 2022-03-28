@@ -152,7 +152,7 @@ def manu_fig2a(
     ax.legend(fontsize=16)
     ax.axhline(y=0, c='k', alpha=0.2, lw=2)
     ax.tick_params(axis='both', which='major', labelsize=16)
-    ax.set_xlabel('intermediate size', fontsize=16)
+    ax.set_xlabel('cluster size', fontsize=16)
     ax.set_xlim(0, 45)
     ax.set_ylim(ylim)
     ax.set_ylabel(ylbl, fontsize=16)
@@ -191,7 +191,7 @@ def manu_fig2b_plot_FE_withaminal(
     amine=None
 ):
 
-    fig, ax = plt.subplots(figsize=(8, 3))
+    fig, ax = plt.subplots(figsize=(8, 4))
     for ami in X:
         count1 = 0
         count2 = 0
@@ -356,7 +356,7 @@ def main():
             ylim=(0, None),
             amine=None
         )
-        if output_prefix == 'ds_O_mp2_gas':
+        if output_prefix == 'xtbgas':
             manu_si_table(
                 X=X_v,
                 Y=Y_v,
@@ -399,6 +399,12 @@ def main():
                 ylim=(-10, 110),
                 amine=ami
             )
+            if output_prefix == 'ds_O_b97_gas':
+                ylimmax = 180
+            elif output_prefix == 'xtbgas':
+                ylimmax = 600
+            else:
+                ylimmax = None
             manu_fig2b_plot_FE_withaminal(
                 X=X_v,
                 Y=Y_v,
@@ -411,7 +417,7 @@ def main():
                     f'{figures_directory}/manu_fig2b{output_prefix}'
                     f'_fe_total_{ami}.pdf'
                 ),
-                ylim=(-10, None),
+                ylim=(-10, ylimmax),
                 amine=ami
             )
             manu_fig2b_plot_FE_withaminal(
