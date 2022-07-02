@@ -1,6 +1,12 @@
 # intermediate_tester
 Build and optimise cage intermediates
 
+Publication DOI:
+
+Citable Data DOI:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6790519.svg)](https://doi.org/10.5281/zenodo.6790519)
+
+
 # Order to run intermediate analysis:
 * Before running anything, run build_cages.py and manually build precursors!
 * Run:
