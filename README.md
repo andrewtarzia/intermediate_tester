@@ -17,13 +17,13 @@ Citable Data DOI:
         * Runs opls3e conformer search and optimisation -> '{name}_ff.mol', '{name}_md.mol'
         * Then runs xTB optimisation -> '{name}_opt.{mol, ey}' [multiple ey files for multiple solvents]
 
-    * write_gaussian_input.py
+    * write_gaussian_input.py [Note that only the xtb energies were used in the manuscript in the end.]
         * writes into xtb_spe_DFT/
         * writes input files for single point energy calculations
 
     * RUN single-point energy calculations through Gaussian
 
-    * write_orca_input.py
+    * write_orca_input.py [Note that only the xtb energies were used in the manuscript in the end.]
         * writes into orca_calculations/
         * writes input files for B97-3c optimisations and single point energy calculations
 
